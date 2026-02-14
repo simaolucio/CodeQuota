@@ -1,112 +1,63 @@
-# Claude Usage Menu Bar App
+# Claude Session Watcher
 
-A native macOS menu bar application that displays your Claude API usage in real-time.
+A native macOS menu bar app that monitors your Claude Pro/Max subscription usage limits in real time.
 
 ## Features
 
-- 🎯 Live usage tracking in the menu bar
-- ⏱️ 5-hour session usage monitoring
-- 📊 Weekly limit tracking  
-- 🔄 Auto-refresh every 20 seconds
-- 🎨 Beautiful translucent UI matching macOS design language
-- 📱 Quick access to claude.ai
+- Live usage tracking directly in the menu bar (colored status circle + percentage)
+- 5-hour session usage monitoring
+- Weekly all-models and Sonnet-specific limit tracking
+- Auto-refresh every 30 seconds
+- Transparent popover with system vibrancy
+- Color-coded progress bars: green (<50%), yellow (50-80%), red (>80%)
 
 ## Installation
 
 ### Prerequisites
 - macOS 13.0 or later
 - Xcode 15.0 or later
-- An Anthropic API key
 
 ### Building from Source
 
 1. Clone this repository
 2. Open `ClaudeUsageApp.xcodeproj` in Xcode
-3. Build and run (⌘+R)
+3. Build and run (Cmd+R)
 
-### Setting up your API Key
+## Setup
 
-Set your Anthropic API key as an environment variable:
+1. Launch the app — it appears in your menu bar
+2. Click the menu bar icon and go to **Settings**
+3. Click **Connect to Anthropic** — this opens the Anthropic authorization page in your browser
+4. Authorize the app, then copy the code shown on the page
+5. Paste the code back into the app and click **Connect**
 
-```bash
-export ANTHROPIC_API_KEY=your_api_key_here
-```
+That's it. The app will start fetching your usage data automatically.
 
-Or add it to your shell profile (~/.zshrc or ~/.bash_profile):
+## How It Works
 
-```bash
-echo 'export ANTHROPIC_API_KEY=your_api_key_here' >> ~/.zshrc
-source ~/.zshrc
-```
+The app uses Anthropic's OAuth PKCE flow (the same one used by Claude Code) to authenticate with your Claude Pro/Max subscription. Once connected, it polls the usage API every 30 seconds to display:
 
-Alternatively, the app will store your API key in UserDefaults once you enter it in the Settings.
+- **5-Hour Session** — your current rolling session utilization and reset countdown
+- **Weekly — All Models** — your 7-day usage across all Claude models
+- **Weekly — Sonnet** — your 7-day Sonnet-specific usage
 
-## Usage
+Credentials are stored locally in UserDefaults and tokens are refreshed automatically.
 
-1. Launch the app - it will appear in your menu bar with usage statistics
-2. Click the menu bar icon to see detailed usage information
-3. The app automatically refreshes every 20 seconds
-4. Click the refresh button to manually update usage data
+## Project Structure
 
-## Features in Detail
-
-### Menu Bar Display
-Shows current 5-hour usage percentage and time remaining at a glance.
-
-### Popover Window
-- **5-Hour Session**: Current usage within the 5-hour rolling window
-- **Weekly Limit**: Total weekly usage tracking
-- **Progress Bars**: Visual representation with color coding (green < 50%, yellow < 80%, red ≥ 80%)
-- **Time Remaining**: Countdown until each limit resets
-- **Quick Actions**: 
-  - Open claude.ai in your browser
-  - Settings (coming soon)
-  - Quit application
-
-## API Integration
-
-The app uses the Anthropic API to fetch usage data. Currently, it displays mock data as the exact API endpoint structure may vary. To integrate with the real API:
-
-1. Update the `fetchUsageData` method in `ClaudeUsageManager.swift`
-2. Parse the actual API response in `parseUsageData` method
-3. Map the response fields to the `ClaudeUsage` struct
-
-## Development
-
-### Project Structure
 ```
 ClaudeUsageApp/
-├── ClaudeUsageApp.swift       # App entry point
-├── AppDelegate.swift           # Menu bar setup
-├── ContentView.swift           # Main popover UI
-├── UsageIconView.swift         # Menu bar icon view
-├── ClaudeUsageManager.swift    # Usage data management
-├── Info.plist                  # App configuration
-└── ClaudeUsageApp.entitlements # Sandbox permissions
+├── ClaudeUsageApp.swift          # App entry point
+├── AppDelegate.swift              # Menu bar + popover setup
+├── ContentView.swift              # Main popover UI
+├── UsageIconView.swift            # Menu bar icon
+├── ClaudeUsageManager.swift       # Usage data fetching and parsing
+├── AnthropicAuthManager.swift     # OAuth PKCE authentication
+├── SettingsView.swift             # Connection settings UI
+├── Info.plist                     # App configuration
+└── ClaudeUsageApp.entitlements    # Sandbox permissions
 ```
-
-### Key Components
-
-- **ClaudeUsageManager**: Singleton that manages API calls and data updates
-- **ContentView**: SwiftUI view for the main popover interface
-- **UsageIconView**: Menu bar icon showing current usage
-- **AppDelegate**: Sets up the NSStatusItem and popover
-
-## Customization
-
-You can customize:
-- Refresh interval (default: 20 seconds) in `ClaudeUsageManager.startAutoRefresh()`
-- Color thresholds in `ProgressBar.color(for:)` method
-- Window size in `AppDelegate` and `ContentView`
 
 ## License
 
-MIT License - feel free to use and modify as needed.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Support
-
-If you encounter any issues or have questions, please open an issue on GitHub.
+MIT
