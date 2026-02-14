@@ -1,0 +1,117 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+# Prevent concurrent builds for the same ref
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+# Needed for gh release commands
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build DMG
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Build archive
+        run: |
+          xcodebuild archive \
+            -project CodeQuota.xcodeproj \
+            -scheme CodeQuota \
+            -configuration Release \
+            -archivePath build/CodeQuota.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            | tail -20
+
+      - name: Extract app from archive
+        run: |
+          cp -R "build/CodeQuota.xcarchive/Products/Applications/CodeQuota.app" build/CodeQuota.app
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            echo "dmg_name=CodeQuota-${{ github.ref_name }}.dmg" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=latest" >> "$GITHUB_OUTPUT"
+            echo "dmg_name=CodeQuota-latest.dmg" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create DMG
+        run: |
+          create-dmg \
+            --volname "CodeQuota" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "CodeQuota.app" 175 190 \
+            --app-drop-link 425 190 \
+            "build/${{ steps.version.outputs.dmg_name }}" \
+            "build/CodeQuota.app"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.dmg_name }}
+          path: build/${{ steps.version.outputs.dmg_name }}
+
+      # --- Tagged release (stable) ---
+      - name: Create stable release
+        if: github.ref_type == 'tag'
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            "build/${{ steps.version.outputs.dmg_name }}" \
+            --title "CodeQuota ${{ github.ref_name }}" \
+            --generate-notes \
+            --latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Main branch (latest pre-release) ---
+      - name: Delete previous latest release
+        if: github.ref_type != 'tag'
+        run: |
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create latest pre-release
+        if: github.ref_type != 'tag'
+        run: |
+          gh release create latest \
+            "build/${{ steps.version.outputs.dmg_name }}" \
+            --title "Latest Build" \
+            --notes "$(cat <<'NOTES'
+          Automated build from the latest \`main\` branch.
+
+          **This is a pre-release and may be unstable.** For stable versions, see the [latest stable release](../../releases/latest).
+
+          ### Installation
+          1. Download \`CodeQuota-latest.dmg\`
+          2. Open the DMG and drag CodeQuota to Applications
+          3. On first launch, right-click the app → Open (required for unsigned builds)
+          NOTES
+          )" \
+            --prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
