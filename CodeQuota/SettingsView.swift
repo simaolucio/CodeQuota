@@ -12,8 +12,7 @@ struct SettingsView: View {
     var onDismiss: () -> Void
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
                 // Header — matching CODEQUOTA style
                 HStack {
                     Button(action: onDismiss) {
@@ -23,7 +22,7 @@ struct SettingsView: View {
                             Text("Back")
                                 .font(.system(size: 11))
                         }
-                        .foregroundColor(.secondary.opacity(0.4))
+                        .foregroundColor(Color(red: 0.49, green: 0.42, blue: 0.96))
                     }
                     .buttonStyle(PlainButtonStyle())
                     
@@ -77,7 +76,6 @@ struct SettingsView: View {
                 githubSection
                     .padding(.horizontal, 24)
                     .padding(.bottom, 20)
-            }
         }
     }
     

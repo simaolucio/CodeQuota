@@ -3,41 +3,90 @@ import AppKit
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
-    private var popover: NSPopover!
+    private var panel: NSPanel!
+    private var eventMonitor: Any?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem.button {
-            // Create custom icon view that passes through mouse events
             let iconView = UsageIconView()
             let hostingView = ClickThroughHostingView(rootView: iconView)
             hostingView.frame = NSRect(x: 0, y: 0, width: 80, height: 22)
             button.addSubview(hostingView)
             button.frame = hostingView.frame
-            button.action = #selector(togglePopover)
+            button.action = #selector(togglePanel)
             button.target = self
         }
         
-        popover = NSPopover()
-        popover.contentSize = NSSize(width: 400, height: 10)
-        popover.behavior = .transient
+        // Borderless panel — no titlebar, no arrow, tight to content
+        panel = NSPanel(
+            contentRect: .zero,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: true
+        )
+        panel.isFloatingPanel = true
+        panel.level = .statusBar
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.isOpaque = false
         
         let contentView = ContentView()
             .environment(\.colorScheme, .dark)
         let hostingController = NSHostingController(rootView: contentView)
-        
-        popover.contentViewController = hostingController
+        panel.contentViewController = hostingController
     }
     
-    @objc func togglePopover() {
-        if let button = statusItem.button {
-            if popover.isShown {
-                popover.performClose(nil)
-            } else {
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            }
+    @objc func togglePanel() {
+        if panel.isVisible {
+            closePanel()
+        } else {
+            openPanel()
+        }
+    }
+    
+    private func openPanel() {
+        guard let button = statusItem.button,
+              let buttonWindow = button.window else { return }
+        
+        let buttonRect = button.convert(button.bounds, to: nil)
+        let screenRect = buttonWindow.convertToScreen(buttonRect)
+        
+        // Size the panel to fit its content exactly
+        guard let hostingView = panel.contentViewController?.view else { return }
+        let panelWidth: CGFloat = 400
+        hostingView.frame.size.width = panelWidth
+        hostingView.layoutSubtreeIfNeeded()
+        let panelHeight = hostingView.fittingSize.height
+        
+        // Position centered below the status bar button
+        let panelX = screenRect.midX - panelWidth / 2
+        let panelY = screenRect.minY - panelHeight - 4
+        
+        panel.setFrame(NSRect(x: panelX, y: panelY, width: panelWidth, height: panelHeight), display: true)
+        
+        // Apply rounded corners on the window's backing layer
+        if let windowView = panel.contentView?.superview {
+            windowView.wantsLayer = true
+            windowView.layer?.cornerRadius = 20
+            windowView.layer?.cornerCurve = .continuous
+            windowView.layer?.masksToBounds = true
+        }
+        
+        panel.makeKeyAndOrderFront(nil)
+        
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            self?.closePanel()
+        }
+    }
+    
+    private func closePanel() {
+        panel.orderOut(nil)
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
         }
     }
 }

@@ -13,7 +13,8 @@ struct ContentView: View {
         Group {
             if showSettings {
                 SettingsView(onDismiss: { showSettings = false })
-                    .frame(width: 400, height: 540)
+                    .frame(width: 400)
+                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 mainView
                     .frame(width: 400)
@@ -68,7 +69,7 @@ struct ContentView: View {
                 Button(action: { showSettings = true }) {
                     Text("Settings")
                         .font(.system(size: 11))
-                        .foregroundColor(.secondary.opacity(0.4))
+                        .foregroundColor(Color(red: 0.49, green: 0.42, blue: 0.96))
                 }
                 .buttonStyle(PlainButtonStyle())
                 
@@ -77,7 +78,7 @@ struct ContentView: View {
                 Button(action: { NSApplication.shared.terminate(nil) }) {
                     Text("Quit")
                         .font(.system(size: 11))
-                        .foregroundColor(.secondary.opacity(0.4))
+                        .foregroundColor(Color(red: 0.49, green: 0.42, blue: 0.96))
                 }
                 .buttonStyle(PlainButtonStyle())
             }
