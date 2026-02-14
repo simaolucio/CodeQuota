@@ -13,11 +13,13 @@ struct ContentView: View {
         Group {
             if showSettings {
                 SettingsView(onDismiss: { showSettings = false })
+                    .frame(width: 400, height: 540)
             } else {
                 mainView
+                    .frame(width: 400)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .frame(width: 400, height: 540)
         .onAppear {
             claudeUsage.startAutoRefresh()
             copilotUsage.startAutoRefresh()
@@ -27,55 +29,58 @@ struct ContentView: View {
     // MARK: - Main View
     
     private var mainView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // Header — uppercase tracked, from alt-3
-                Text("CODEQUOTA")
-                    .font(.system(size: 11, weight: .semibold))
-                    .tracking(2.5)
-                    .foregroundColor(.secondary.opacity(0.5))
-                    .padding(.horizontal, 24)
-                    .padding(.top, 28)
-                    .padding(.bottom, 24)
-                
-                // Claude section
-                if anthropicAuth.isConnected && hasVisibleClaudeMetrics {
-                    claudeSection
-                }
-                
-                // Copilot section
-                if githubAuth.isConnected && settings.isVisible(.copilotPremium) {
-                    copilotSection
-                }
-                
-                // Not connected prompt
-                if !anthropicAuth.isConnected && !githubAuth.isConnected {
-                    notConnectedView
-                }
-                
-                Spacer(minLength: 20)
-                
-                // Bottom actions — ultra minimal from alt-3
-                HStack(spacing: 0) {
-                    Button(action: { showSettings = true }) {
-                        Text("Settings")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary.opacity(0.4))
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    
-                    Spacer()
-                    
-                    Button(action: { NSApplication.shared.terminate(nil) }) {
-                        Text("Quit")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary.opacity(0.4))
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            // Header — uppercase tracked
+            Text("CODEQUOTA")
+                .font(.system(size: 11, weight: .semibold))
+                .tracking(2.5)
+                .foregroundColor(.secondary.opacity(0.5))
                 .padding(.horizontal, 24)
-                .padding(.bottom, 20)
+                .padding(.top, 28)
+                .padding(.bottom, 24)
+            
+            // Claude section
+            if anthropicAuth.isConnected && hasVisibleClaudeMetrics {
+                claudeSection
             }
+            
+            // Copilot section
+            if githubAuth.isConnected && settings.isVisible(.copilotPremium) {
+                copilotSection
+            }
+            
+            // Not connected prompt
+            if !anthropicAuth.isConnected && !githubAuth.isConnected {
+                notConnectedView
+            }
+            
+            // Bottom actions — always visible
+            Rectangle()
+                .fill(Color.primary.opacity(0.06))
+                .frame(height: 1)
+                .padding(.horizontal, 24)
+                .padding(.top, 4)
+                .padding(.bottom, 12)
+            
+            HStack(spacing: 0) {
+                Button(action: { showSettings = true }) {
+                    Text("Settings")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary.opacity(0.4))
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Spacer()
+                
+                Button(action: { NSApplication.shared.terminate(nil) }) {
+                    Text("Quit")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary.opacity(0.4))
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 20)
         }
     }
     
@@ -253,9 +258,7 @@ struct ContentView: View {
     // MARK: - Not Connected View
     
     private var notConnectedView: some View {
-        VStack(spacing: 20) {
-            Spacer(minLength: 60)
-            
+        VStack(spacing: 12) {
             Text("No accounts connected")
                 .font(.system(size: 13))
                 .foregroundColor(.secondary.opacity(0.5))
@@ -266,11 +269,10 @@ struct ContentView: View {
                     .foregroundColor(.accentColor)
             }
             .buttonStyle(PlainButtonStyle())
-            
-            Spacer(minLength: 60)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 24)
+        .padding(.vertical, 20)
     }
     
     // MARK: - Helpers
