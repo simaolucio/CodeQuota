@@ -14,58 +14,68 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Header
+                // Header — matching CODEQUOTA style
                 HStack {
                     Button(action: onDismiss) {
                         HStack(spacing: 4) {
                             Image(systemName: "chevron.left")
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.system(size: 11))
                             Text("Back")
-                                .font(.system(size: 13))
+                                .font(.system(size: 11))
                         }
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.secondary.opacity(0.4))
                     }
                     .buttonStyle(PlainButtonStyle())
                     
                     Spacer()
                     
-                    Text("Settings")
-                        .font(.system(size: 17, weight: .semibold))
+                    Text("SETTINGS")
+                        .font(.system(size: 11, weight: .semibold))
+                        .tracking(2.5)
+                        .foregroundColor(.secondary.opacity(0.5))
                     
                     Spacer()
                     
                     // Balance spacer
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: 11))
                         Text("Back")
-                            .font(.system(size: 13))
+                            .font(.system(size: 11))
                     }
                     .opacity(0)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 16)
-                
-                Divider().opacity(0.3).padding(.bottom, 16)
+                .padding(.horizontal, 24)
+                .padding(.top, 28)
+                .padding(.bottom, 24)
                 
                 // Menu Bar Metric Picker
                 metricPickerSection
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 24)
                     .padding(.bottom, 20)
                 
-                Divider().opacity(0.15).padding(.horizontal, 20).padding(.bottom, 16)
+                // Divider
+                Rectangle()
+                    .fill(Color.primary.opacity(0.06))
+                    .frame(height: 1)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 20)
                 
                 // Anthropic Account
                 anthropicSection
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 24)
                     .padding(.bottom, 20)
                 
-                Divider().opacity(0.15).padding(.horizontal, 20).padding(.bottom, 16)
+                // Divider
+                Rectangle()
+                    .fill(Color.primary.opacity(0.06))
+                    .frame(height: 1)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 20)
                 
                 // GitHub Account
                 githubSection
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 24)
                     .padding(.bottom, 20)
             }
         }
@@ -76,11 +86,12 @@ struct SettingsView: View {
     private var metricPickerSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Menu Bar Metric")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.secondary.opacity(0.6))
             
             Text("Choose which metric to display in the menu bar.")
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
+                .font(.system(size: 11))
+                .foregroundColor(.secondary.opacity(0.35))
             
             Picker("", selection: $menuBarSettings.selectedMetric) {
                 ForEach(availableMetrics, id: \.self) { metric in
@@ -102,7 +113,6 @@ struct SettingsView: View {
             metrics.append(.copilotPremium)
         }
         if metrics.isEmpty {
-            // Show all as disabled hint
             return MenuBarMetric.allCases
         }
         return metrics
@@ -112,11 +122,12 @@ struct SettingsView: View {
     
     private var anthropicSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Anthropic Account")
-                .font(.system(size: 14, weight: .semibold))
+            Text("Anthropic")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.secondary.opacity(0.6))
             
             if anthropicAuth.isConnected {
-                connectedBadge(title: "Claude Pro/Max", color: .green) {
+                connectedTile(title: "Claude Pro/Max", color: .green) {
                     anthropicAuth.disconnect()
                     showingAnthropicFlow = false
                     anthropicCode = ""
@@ -125,11 +136,11 @@ struct SettingsView: View {
                 anthropicAuthFlow
             } else {
                 Text("Connect your Claude Pro or Max subscription.")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary.opacity(0.35))
                     .fixedSize(horizontal: false, vertical: true)
                 
-                connectButton("Connect to Anthropic") {
+                connectTileButton("Connect to Anthropic") {
                     anthropicURL = anthropicAuth.generateAuthorizationURL()
                     showingAnthropicFlow = true
                 }
@@ -145,14 +156,27 @@ struct SettingsView: View {
             if let url = anthropicURL {
                 Button(action: { NSWorkspace.shared.open(url) }) {
                     HStack {
-                        Image(systemName: "arrow.up.right.square").font(.system(size: 13))
-                        Text("Open in Browser").font(.system(size: 13, weight: .medium))
+                        Image(systemName: "arrow.up.right.square").font(.system(size: 12))
+                        Text("Open in Browser").font(.system(size: 12, weight: .medium))
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(Color.accentColor)
-                    .foregroundColor(.white)
-                    .cornerRadius(6)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.accentColor.opacity(0.15),
+                                Color.accentColor.opacity(0.06)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .foregroundColor(.accentColor)
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.accentColor.opacity(0.15), lineWidth: 0.5)
+                    )
                 }
                 .buttonStyle(PlainButtonStyle())
             }
@@ -163,7 +187,7 @@ struct SettingsView: View {
             HStack(spacing: 8) {
                 TextField("Paste code...", text: $anthropicCode)
                     .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 13, design: .monospaced))
+                    .font(.system(size: 12, design: .monospaced))
                     .disabled(anthropicAuth.isExchangingCode)
                 
                 Button(action: {
@@ -171,9 +195,9 @@ struct SettingsView: View {
                     anthropicAuth.exchangeCode(anthropicCode)
                 }) {
                     if anthropicAuth.isExchangingCode {
-                        ProgressView().controlSize(.small).frame(width: 60)
+                        ProgressView().controlSize(.small).frame(width: 56)
                     } else {
-                        Text("Connect").font(.system(size: 13, weight: .medium)).frame(width: 60)
+                        Text("Connect").font(.system(size: 12, weight: .medium)).frame(width: 56)
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -189,7 +213,7 @@ struct SettingsView: View {
                 anthropicCode = ""
                 anthropicAuth.authError = nil
             }
-            .font(.system(size: 12)).foregroundColor(.secondary)
+            .font(.system(size: 11)).foregroundColor(.secondary.opacity(0.4))
             .buttonStyle(PlainButtonStyle())
         }
     }
@@ -198,22 +222,23 @@ struct SettingsView: View {
     
     private var githubSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("GitHub Account")
-                .font(.system(size: 14, weight: .semibold))
+            Text("GitHub")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.secondary.opacity(0.6))
             
             if githubAuth.isConnected {
-                connectedBadge(title: "GitHub (\(githubAuth.username))", color: .purple) {
+                connectedTile(title: "GitHub (\(githubAuth.username))", color: .purple) {
                     githubAuth.disconnect()
                 }
             } else if githubAuth.isAuthenticating {
                 githubDeviceFlow
             } else {
                 Text("Connect your GitHub account to view Copilot premium request usage.")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary.opacity(0.35))
                     .fixedSize(horizontal: false, vertical: true)
                 
-                connectButton("Connect to GitHub") {
+                connectTileButton("Connect to GitHub") {
                     githubAuth.startDeviceFlow()
                 }
             }
@@ -228,12 +253,12 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 12) {
             if let code = githubAuth.userCode, let url = githubAuth.verificationURL {
                 Text("Enter this code on GitHub:")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary.opacity(0.5))
                 
                 HStack {
                     Text(code)
-                        .font(.system(size: 20, weight: .bold, design: .monospaced))
+                        .font(.system(size: 18, weight: .light, design: .monospaced))
                         .textSelection(.enabled)
                     
                     Button(action: {
@@ -241,8 +266,8 @@ struct SettingsView: View {
                         NSPasteboard.general.setString(code, forType: .string)
                     }) {
                         Image(systemName: "doc.on.doc")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary.opacity(0.4))
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
@@ -251,27 +276,40 @@ struct SettingsView: View {
                     if let u = URL(string: url) { NSWorkspace.shared.open(u) }
                 }) {
                     HStack {
-                        Image(systemName: "arrow.up.right.square").font(.system(size: 13))
-                        Text("Open GitHub").font(.system(size: 13, weight: .medium))
+                        Image(systemName: "arrow.up.right.square").font(.system(size: 12))
+                        Text("Open GitHub").font(.system(size: 12, weight: .medium))
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(Color.purple)
-                    .foregroundColor(.white)
-                    .cornerRadius(6)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.purple.opacity(0.15),
+                                Color.purple.opacity(0.06)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .foregroundColor(.purple)
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.purple.opacity(0.15), lineWidth: 0.5)
+                    )
                 }
                 .buttonStyle(PlainButtonStyle())
                 
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small)
                     Text("Waiting for authorization...")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary.opacity(0.4))
                 }
             }
             
             Button("Cancel") { githubAuth.cancelAuth() }
-                .font(.system(size: 12)).foregroundColor(.secondary)
+                .font(.system(size: 11)).foregroundColor(.secondary.opacity(0.4))
                 .buttonStyle(PlainButtonStyle())
         }
     }
@@ -281,46 +319,74 @@ struct SettingsView: View {
     private func stepView(number: String, title: String) -> some View {
         HStack(spacing: 8) {
             Text(number)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.white)
-                .frame(width: 22, height: 22)
-                .background(Color.accentColor)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.secondary.opacity(0.5))
+                .frame(width: 20, height: 20)
+                .background(Color.primary.opacity(0.06))
                 .clipShape(Circle())
-            Text(title).font(.system(size: 14, weight: .medium))
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.primary.opacity(0.7))
         }
     }
     
-    private func connectButton(_ title: String, action: @escaping () -> Void) -> some View {
+    private func connectTileButton(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack {
-                Image(systemName: "link").font(.system(size: 14))
-                Text(title).font(.system(size: 14, weight: .medium))
+                Image(systemName: "link").font(.system(size: 12))
+                Text(title).font(.system(size: 12, weight: .medium))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
-            .background(Color.accentColor.opacity(0.15))
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.accentColor.opacity(0.10),
+                        Color.accentColor.opacity(0.03)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .foregroundColor(.accentColor)
-            .cornerRadius(8)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.accentColor.opacity(0.12), lineWidth: 0.5)
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }
     
-    private func connectedBadge(title: String, color: Color, disconnect: @escaping () -> Void) -> some View {
+    private func connectedTile(title: String, color: Color, disconnect: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(color)
-                    .font(.system(size: 18))
+                    .font(.system(size: 16))
                 Text(title)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                 Spacer()
             }
-            .padding(10)
-            .background(color.opacity(0.08))
-            .cornerRadius(8)
+            .padding(12)
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        color.opacity(0.08),
+                        color.opacity(0.02)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(color.opacity(0.12), lineWidth: 0.5)
+            )
             
             Button("Disconnect", action: disconnect)
-                .font(.system(size: 12)).foregroundColor(.red)
+                .font(.system(size: 11)).foregroundColor(.red.opacity(0.7))
                 .buttonStyle(PlainButtonStyle())
         }
     }
@@ -328,8 +394,8 @@ struct SettingsView: View {
     private func errorLabel(_ text: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundColor(.red).font(.system(size: 12))
-            Text(text).font(.system(size: 12)).foregroundColor(.red)
+                .foregroundColor(.red.opacity(0.7)).font(.system(size: 11))
+            Text(text).font(.system(size: 11)).foregroundColor(.red.opacity(0.7))
         }
         .fixedSize(horizontal: false, vertical: true)
     }
