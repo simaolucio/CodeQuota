@@ -1,4 +1,4 @@
-# Claude Session Watcher
+# CodeQuota
 
 A native macOS menu bar app that monitors your AI service usage limits in real time. Supports **Claude Pro/Max** (Anthropic) and **GitHub Copilot** premium request tracking.
 
@@ -21,7 +21,7 @@ A native macOS menu bar app that monitors your AI service usage limits in real t
 ### Building from Source
 
 1. Clone this repository
-2. Open `ClaudeUsageApp.xcodeproj` in Xcode
+2. Open `CodeQuota.xcodeproj` in Xcode
 3. Build and run (Cmd+R)
 
 ## Setup
@@ -58,15 +58,15 @@ The app uses Anthropic's OAuth PKCE flow (the same one used by Claude Code) to a
 
 ### Copilot (GitHub)
 
-The app uses GitHub's device flow OAuth to authenticate. Once connected, it fetches your monthly premium request billing data from the GitHub API, showing usage counts per model against the default 300-request monthly limit for Copilot Pro.
+The app uses GitHub's device flow OAuth to authenticate. Once connected, it fetches your monthly premium request billing data from the GitHub API, showing usage counts per model against your plan's included allowance.
 
 Credentials are stored locally in UserDefaults and tokens are refreshed automatically.
 
 ## Project Structure
 
 ```
-ClaudeUsageApp/
-├── ClaudeUsageApp.swift          # App entry point
+CodeQuota/
+├── CodeQuotaApp.swift             # App entry point
 ├── AppDelegate.swift              # Menu bar + popover setup
 ├── ContentView.swift              # Main popover UI (Claude + Copilot sections)
 ├── UsageIconView.swift            # Menu bar icon (configurable metric)
@@ -77,7 +77,7 @@ ClaudeUsageApp/
 ├── MenuBarMetric.swift            # Menu bar metric selection model
 ├── SettingsView.swift             # Connection settings UI
 ├── Info.plist                     # App configuration
-└── ClaudeUsageApp.entitlements    # Sandbox permissions
+└── CodeQuota.entitlements         # Sandbox permissions
 ```
 
 ## License
