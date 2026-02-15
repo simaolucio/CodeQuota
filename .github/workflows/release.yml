@@ -23,8 +23,11 @@ jobs:
             -configuration Release \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGNING_ALLOWED=YES
+
+      - name: Ad-hoc sign the app bundle
+        run: codesign --force --deep --sign - build/Build/Products/Release/CodeQuota.app
 
       - name: Install create-dmg
         run: brew install create-dmg
