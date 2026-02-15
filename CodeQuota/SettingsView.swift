@@ -64,7 +64,35 @@ struct SettingsView: View {
             // --- Menu Bar ---
             metricSection
                 .padding(.horizontal, 24)
-                .padding(.bottom, 20)
+                .padding(.bottom, 16)
+            
+            // Thin divider
+            Rectangle()
+                .fill(Color.primary.opacity(0.06))
+                .frame(height: 1)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 12)
+            
+            // Buy me a coffee
+            HStack {
+                Spacer()
+                Button(action: {
+                    if let url = URL(string: "https://ko-fi.com/P5P31U8CJQ") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "cup.and.saucer.fill")
+                            .font(.system(size: 10))
+                        Text("Buy me a coffee")
+                            .font(.system(size: 11))
+                    }
+                    .foregroundColor(violet)
+                }
+                .buttonStyle(PlainButtonStyle())
+                Spacer()
+            }
+            .padding(.bottom, 20)
         }
     }
     
@@ -387,6 +415,20 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 2)
             }
+            
+            // Show reset time toggle
+            Rectangle()
+                .fill(Color.primary.opacity(0.06))
+                .frame(height: 1)
+                .padding(.vertical, 8)
+            
+            Toggle(isOn: $menuBarSettings.showResetTime) {
+                Text("Show reset time")
+                    .font(.system(size: 11))
+                    .foregroundColor(.primary.opacity(0.7))
+            }
+            .toggleStyle(SwitchToggleStyle(tint: violet))
+            .controlSize(.mini)
         }
     }
     

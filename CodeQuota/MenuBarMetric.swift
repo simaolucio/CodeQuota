@@ -37,6 +37,13 @@ class MenuBarSettings: ObservableObject {
     
     private static let key = "menubar_selected_metric"
     private static let hiddenKey = "hidden_metrics"
+    private static let showResetTimeKey = "show_reset_time"
+    
+    @Published var showResetTime: Bool {
+        didSet {
+            UserDefaults.standard.set(showResetTime, forKey: Self.showResetTimeKey)
+        }
+    }
     
     @Published var selectedMetric: MenuBarMetric {
         didSet {
@@ -63,6 +70,13 @@ class MenuBarSettings: ObservableObject {
             hiddenMetrics = Set(rawValues.compactMap { MenuBarMetric(rawValue: $0) })
         } else {
             hiddenMetrics = []
+        }
+        
+        // Default to true if never set
+        if UserDefaults.standard.object(forKey: Self.showResetTimeKey) != nil {
+            showResetTime = UserDefaults.standard.bool(forKey: Self.showResetTimeKey)
+        } else {
+            showResetTime = true
         }
     }
     

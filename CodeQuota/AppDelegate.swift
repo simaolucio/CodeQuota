@@ -13,9 +13,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = statusItem.button {
             let iconView = UsageIconView()
             let hostingView = ClickThroughHostingView(rootView: iconView)
-            hostingView.frame = NSRect(x: 0, y: 0, width: 80, height: 22)
+            hostingView.translatesAutoresizingMaskIntoConstraints = false
             button.addSubview(hostingView)
-            button.frame = hostingView.frame
+            NSLayoutConstraint.activate([
+                hostingView.topAnchor.constraint(equalTo: button.topAnchor),
+                hostingView.bottomAnchor.constraint(equalTo: button.bottomAnchor),
+                hostingView.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+                hostingView.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+            ])
             button.action = #selector(togglePanel)
             button.target = self
         }
