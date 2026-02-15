@@ -6,12 +6,18 @@
 -->
 
 <p align="center">
-  <img src="assets/banner.svg" alt="CodeQuota — Claude & Copilot usage tracking for macOS" width="800">
-</p>
-
-<h1 align="center">CodeQuota</h1>
-<p align="center">
-  <strong>Track your Claude Pro/Max and GitHub Copilot usage limits in real time, right from your macOS menu bar.</strong>
+<pre>
+┌──────────────────────────────────────────────────────────────────┐
+│                                                                  │
+│              ╲╱                                                   │
+│             ╳⚡╳        C o d e Q u o t a                         │
+│              ╱╲                                                   │
+│                   Claude & Copilot usage tracking for macOS      │
+│                                                                  │
+│             ◈ Menu Bar   ◈ Real-time   ◈ Open Source             │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+</pre>
 </p>
 
 <p align="center">
