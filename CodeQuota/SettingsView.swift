@@ -8,6 +8,7 @@ struct SettingsView: View {
     @ObservedObject var anthropicAuth = AnthropicAuthManager.shared
     @ObservedObject var githubAuth = GitHubAuthManager.shared
     @ObservedObject var menuBarSettings = MenuBarSettings.shared
+    @ObservedObject var updater = UpdaterViewModel.shared!
     @State private var anthropicCode: String = ""
     @State private var anthropicURL: URL?
     @State private var showingAnthropicFlow = false
@@ -63,6 +64,18 @@ struct SettingsView: View {
             
             // --- Menu Bar ---
             metricSection
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
+            
+            // Thin divider
+            Rectangle()
+                .fill(Color.primary.opacity(0.06))
+                .frame(height: 1)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
+            
+            // --- Updates ---
+            updatesSection
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
             
@@ -429,6 +442,44 @@ struct SettingsView: View {
             }
             .toggleStyle(SwitchToggleStyle(tint: violet))
             .controlSize(.mini)
+        }
+    }
+    
+    // MARK: - Updates Section
+    
+    private var updatesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("UPDATES")
+                .font(.system(size: 10, weight: .semibold))
+                .tracking(1.5)
+                .foregroundColor(.secondary.opacity(0.3))
+                .padding(.bottom, 2)
+            
+            Toggle(isOn: $updater.automaticallyChecksForUpdates) {
+                Text("Check automatically")
+                    .font(.system(size: 11))
+                    .foregroundColor(.primary.opacity(0.7))
+            }
+            .toggleStyle(SwitchToggleStyle(tint: violet))
+            .controlSize(.mini)
+            
+            HStack {
+                Text("Version \(updater.appVersion)")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary.opacity(0.3))
+                
+                Spacer()
+                
+                Button(action: { updater.checkForUpdates() }) {
+                    Text("Check for Updates")
+                        .font(.system(size: 11))
+                        .foregroundColor(violet)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(!updater.canCheckForUpdates)
+                .opacity(updater.canCheckForUpdates ? 1.0 : 0.4)
+            }
+            .padding(.top, 2)
         }
     }
     

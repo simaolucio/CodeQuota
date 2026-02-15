@@ -15,6 +15,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve SPM dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project CodeQuota.xcodeproj \
+            -scheme CodeQuota
+
       - name: Build with xcodebuild
         run: |
           xcodebuild \
@@ -47,10 +53,89 @@ jobs:
             "CodeQuota-${{ github.ref_name }}.dmg" \
             "build/Build/Products/Release/CodeQuota.app"
 
+      - name: Create ZIP for Sparkle
+        run: |
+          cd build/Build/Products/Release
+          ditto -c -k --sequesterRsrc --keepParent CodeQuota.app CodeQuota.zip
+          mv CodeQuota.zip "$GITHUB_WORKSPACE/CodeQuota-${{ github.ref_name }}.zip"
+
+      - name: Sign update with Sparkle EdDSA
+        if: env.SPARKLE_PRIVATE_KEY != ''
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          # Find Sparkle's sign_update tool from SPM artifacts
+          SIGN_TOOL=$(find build -path "*/artifacts/sparkle/Sparkle/bin/sign_update" -type f 2>/dev/null | head -1)
+          if [ -z "$SIGN_TOOL" ]; then
+            echo "::warning::sign_update tool not found in SPM artifacts, skipping EdDSA signing"
+            exit 0
+          fi
+          chmod +x "$SIGN_TOOL"
+
+          # Sign the zip and capture the signature + length
+          SIGN_OUTPUT=$("$SIGN_TOOL" "CodeQuota-${{ github.ref_name }}.zip" --ed-key-file <(echo "$SPARKLE_PRIVATE_KEY") 2>&1)
+          echo "Sparkle signature output: $SIGN_OUTPUT"
+
+          # Extract signature and length for appcast
+          ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)
+          FILE_LENGTH=$(wc -c < "CodeQuota-${{ github.ref_name }}.zip" | tr -d ' ')
+
+          echo "ED_SIGNATURE=$ED_SIGNATURE" >> "$GITHUB_ENV"
+          echo "FILE_LENGTH=$FILE_LENGTH" >> "$GITHUB_ENV"
+
+      - name: Update appcast.xml
+        if: env.ED_SIGNATURE != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION_NUMBER="${VERSION#v}"
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${VERSION}/CodeQuota-${VERSION}.zip"
+          PUB_DATE=$(date -u +"%a, %d %b %Y %H:%M:%S %z")
+
+          # Clone gh-pages branch
+          git clone --branch gh-pages --single-branch "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" gh-pages-repo 2>/dev/null || {
+            echo "gh-pages branch not found, skipping appcast update"
+            exit 0
+          }
+
+          cd gh-pages-repo
+
+          # Build the new item XML
+          NEW_ITEM="        <item>
+                <title>Version ${VERSION_NUMBER}</title>
+                <pubDate>${PUB_DATE}</pubDate>
+                <sparkle:version>${VERSION_NUMBER}</sparkle:version>
+                <sparkle:shortVersionString>${VERSION_NUMBER}</sparkle:shortVersionString>
+                <enclosure
+                    url=\"${DOWNLOAD_URL}\"
+                    sparkle:edSignature=\"${ED_SIGNATURE}\"
+                    length=\"${FILE_LENGTH}\"
+                    type=\"application/octet-stream\" />
+            </item>"
+
+          # Insert the new item before the closing </channel> tag
+          if [ -f appcast.xml ]; then
+            # Insert before </channel>
+            sed -i '' "s|    </channel>|${NEW_ITEM}\n    </channel>|" appcast.xml
+          else
+            echo "appcast.xml not found on gh-pages"
+            exit 0
+          fi
+
+          # Commit and push
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          git commit -m "Update appcast for ${VERSION}" || echo "No changes to commit"
+          git push
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: CodeQuota-*.dmg
+          files: |
+            CodeQuota-*.dmg
+            CodeQuota-*.zip
           generate_release_notes: true
 
       - name: Trigger website rebuild

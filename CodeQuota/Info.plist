@@ -24,5 +24,11 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2026. All rights reserved.</string>
+	<key>SUFeedURL</key>
+	<string>https://simaolucio.github.io/CodeQuota/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>Aew7HgUYYK8uqcribiMGQjYowoP9OvG7easamDopqhw=</string>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
 </dict>
 </plist>

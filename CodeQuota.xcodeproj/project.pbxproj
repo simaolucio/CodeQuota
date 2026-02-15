@@ -17,6 +17,8 @@
 		C3A6C1A32F427B6000C57C8F /* ClaudeUsageParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A6C1A02F427B6000C57C8F /* ClaudeUsageParser.swift */; };
 		C3A6C1A42F427B6000C57C8F /* CopilotUsageParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A6C1A12F427B6000C57C8F /* CopilotUsageParser.swift */; };
 		C3A6C1A52F427B6000C57C8F /* PKCEHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A6C1A22F427B6000C57C8F /* PKCEHelper.swift */; };
+		C3A6C1E62F42944300C57C8F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = C3A6C1E52F42944300C57C8F /* Sparkle */; };
+		C3A6C1E82F42948600C57C8F /* UpdaterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A6C1E72F42948600C57C8F /* UpdaterViewModel.swift */; };
 		CC0000010000000000000001 /* GitHubAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000020000000000000001 /* GitHubAuthManager.swift */; };
 		CC0000030000000000000001 /* CopilotUsageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000040000000000000001 /* CopilotUsageManager.swift */; };
 		CC0000050000000000000001 /* MenuBarMetric.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000060000000000000001 /* MenuBarMetric.swift */; };
@@ -47,6 +49,7 @@
 		C3A6C1A12F427B6000C57C8F /* CopilotUsageParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopilotUsageParser.swift; sourceTree = "<group>"; };
 		C3A6C1A22F427B6000C57C8F /* PKCEHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKCEHelper.swift; sourceTree = "<group>"; };
 		C3A6C1AA2F427BCA00C57C8F /* CodeQuotaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CodeQuotaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C3A6C1E72F42948600C57C8F /* UpdaterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterViewModel.swift; sourceTree = "<group>"; };
 		CC0000020000000000000001 /* GitHubAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubAuthManager.swift; sourceTree = "<group>"; };
 		CC0000040000000000000001 /* CopilotUsageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopilotUsageManager.swift; sourceTree = "<group>"; };
 		CC0000060000000000000001 /* MenuBarMetric.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarMetric.swift; sourceTree = "<group>"; };
@@ -62,6 +65,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3A6C1E62F42944300C57C8F /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -80,6 +84,7 @@
 			children = (
 				AA0000150000000000000001 /* CodeQuota */,
 				C3A6C1AB2F427BCA00C57C8F /* CodeQuotaTests */,
+				C3A6C1E42F42944300C57C8F /* Frameworks */,
 				AA0000160000000000000001 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -87,6 +92,7 @@
 		AA0000150000000000000001 /* CodeQuota */ = {
 			isa = PBXGroup;
 			children = (
+				C3A6C1E72F42948600C57C8F /* UpdaterViewModel.swift */,
 				AA0000020000000000000001 /* CodeQuotaApp.swift */,
 				AA0000040000000000000001 /* AppDelegate.swift */,
 				AA0000060000000000000001 /* ContentView.swift */,
@@ -113,6 +119,13 @@
 				C3A6C1AA2F427BCA00C57C8F /* CodeQuotaTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C3A6C1E42F42944300C57C8F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -186,6 +199,9 @@
 				Base,
 			);
 			mainGroup = AA0000140000000000000001;
+			packageReferences = (
+				C3A6C1E32F42930100C57C8F /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = AA0000160000000000000001 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -227,6 +243,7 @@
 				BB0000010000000000000001 /* AnthropicAuthManager.swift in Sources */,
 				BB0000030000000000000001 /* SettingsView.swift in Sources */,
 				C3A6C1A32F427B6000C57C8F /* ClaudeUsageParser.swift in Sources */,
+				C3A6C1E82F42948600C57C8F /* UpdaterViewModel.swift in Sources */,
 				C3A6C1A42F427B6000C57C8F /* CopilotUsageParser.swift in Sources */,
 				C3A6C1A52F427B6000C57C8F /* PKCEHelper.swift in Sources */,
 				CC0000010000000000000001 /* GitHubAuthManager.swift in Sources */,
@@ -504,6 +521,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C3A6C1E32F42930100C57C8F /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.8.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C3A6C1E52F42944300C57C8F /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3A6C1E32F42930100C57C8F /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AA0000210000000000000001 /* Project object */;
 }
