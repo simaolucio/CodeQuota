@@ -49,3 +49,6 @@ jobs:
         with:
           files: CodeQuota-*.dmg
           generate_release_notes: true
+
+      - name: Trigger website rebuild
+        run: curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
