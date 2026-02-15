@@ -6,18 +6,7 @@
 -->
 
 <p align="center">
-<pre>
-┌──────────────────────────────────────────────────────────────────┐
-│                                                                  │
-│              ╲╱                                                   │
-│             ╳⚡╳        C o d e Q u o t a                         │
-│              ╱╲                                                   │
-│                   Claude & Copilot usage tracking for macOS      │
-│                                                                  │
-│             ◈ Menu Bar   ◈ Real-time   ◈ Open Source             │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-</pre>
+  <img src="assets/banner.svg" alt="CodeQuota — Claude & Copilot usage tracking for macOS" width="800">
 </p>
 
 <p align="center">
