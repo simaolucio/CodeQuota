@@ -5,17 +5,27 @@
   Author: simaolucio
 -->
 
-# CodeQuota — Claude & Copilot Usage Tracker for macOS
+<p align="center">
+  <img src="assets/banner.png" alt="CodeQuota — Claude & Copilot usage tracking for macOS" width="800">
+</p>
 
-> **Track your Claude Pro/Max and GitHub Copilot usage limits in real time, right from your macOS menu bar.**
-
-[![Website](https://badgen.net/badge/website/codequota.dev/7D6BF5?icon=chrome)](https://codequota.dev/)
-[![Release](https://img.shields.io/github/v/release/simaolucio/CodeQuota)](https://github.com/simaolucio/CodeQuota/releases/latest)
-[![Ko-fi](https://badgen.net/badge/Ko-fi/Buy%20me%20a%20coffee/FF5E5B?icon=kofi)](https://ko-fi.com/P5P31U8CJQ)
+<p align="center">
+  <a href="https://codequota.dev/"><img src="https://badgen.net/badge/website/codequota.dev/7D6BF5?icon=chrome" alt="Website"></a>
+  <a href="https://github.com/simaolucio/CodeQuota/releases/latest"><img src="https://img.shields.io/github/v/release/simaolucio/CodeQuota" alt="Release"></a>
+  <img src="https://img.shields.io/badge/swift-5.9-F05138?logo=swift&logoColor=white" alt="Swift">
+  <a href="https://github.com/simaolucio/CodeQuota/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+  <a href="https://ko-fi.com/P5P31U8CJQ"><img src="https://badgen.net/badge/Ko-fi/Buy%20me%20a%20coffee/FF5E5B?icon=kofi" alt="Ko-fi"></a>
+</p>
 
 ---
 
-CodeQuota is a free, native macOS menu bar app that gives you instant visibility into your AI service quotas. It monitors **Anthropic Claude** (5-hour session, weekly all-models, and weekly Sonnet limits) and **GitHub Copilot** premium request usage — so you never get rate-limited mid-workflow. Unlike other trackers, CodeQuota uses proper OAuth authentication (no cookies or session keys to copy) and is the only tool that tracks both Claude and Copilot in one app.
+<p align="center">
+  <img src="assets/app-screenshot.png" alt="CodeQuota main panel showing Claude and Copilot usage" width="380">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="assets/app-screenshot-settings.png" alt="CodeQuota settings view with connected accounts" width="380">
+</p>
+
+---
 
 ## Why CodeQuota?
 
@@ -27,27 +37,27 @@ The official dashboards are buried. Checking usage means context-switching, logg
 
 **CodeQuota puts your AI usage front and center — a glanceable fuel gauge that lives in your menu bar.**
 
-**Who is this for?**
+## Feature Highlights
 
-- Developers using **Claude Code**, Claude.ai, or the Claude desktop app with a Pro or Max subscription
-- Anyone on a **GitHub Copilot** plan who wants to track premium request consumption per model
-- Power users who rely on AI assistants daily and want to avoid surprise rate limits
+| Glanceable | Privacy-first | Real-time | OAuth — No cookies |
+|---|---|---|---|
+| Usage % + reset time right in your menu bar | All data stays on your Mac. Zero telemetry | Claude polls every 30s, Copilot every 2min | Proper auth flow, no dev tools required |
 
-## Features
+### Full Feature List
 
 - **Menu bar usage indicator** — colored status circle + percentage + optional reset countdown, visible at a glance
 - **Claude usage tracking** — monitors 5-hour rolling session, weekly all-models limit, and weekly Sonnet limit
 - **Copilot usage tracking** — tracks monthly premium request usage broken down by model
 - **Configurable display** — choose which metric appears in the menu bar; toggle reset time on or off
-- **Auto-refresh** — Claude usage polls every 30 seconds; Copilot every 2 minutes
-- **Color-coded progress bars** — green (<50%), yellow (50–80%), red (>80%)
+- **Color-coded progress bars** — green (<50%), yellow (50-80%), red (>80%)
 - **OAuth authentication** — Anthropic PKCE + GitHub device flow. No cookies, no session keys, no browser dev tools
 - **Dark, minimal UI** — borderless panel with rounded corners, consistent dark theme
-- **Privacy-first** — all data stays on your Mac. No telemetry, no cloud sync, no third-party servers
 
-## Screenshots
+**Who is this for?**
 
-<!-- Add 1-2 screenshots here showing the menu bar icon and the expanded panel -->
+- Developers using **Claude Code**, Claude.ai, or the Claude desktop app with a Pro or Max subscription
+- Anyone on a **GitHub Copilot** plan who wants to track premium request consumption per model
+- Power users who rely on AI assistants daily and want to avoid surprise rate limits
 
 ## Installation
 
@@ -114,6 +124,30 @@ Once authenticated, CodeQuota fetches your monthly premium request billing data 
 
 All credentials are stored locally on your Mac in UserDefaults. Anthropic tokens are refreshed automatically. No data is sent to any third-party servers — no telemetry, no analytics, no cloud sync.
 
+> **Note:** Credentials are currently stored in `UserDefaults`. Migration to macOS Keychain for encrypted credential storage is planned for a future release.
+
+## FAQ
+
+### Does CodeQuota consume any Claude tokens or Copilot requests?
+
+No. CodeQuota only reads usage and billing data from the respective APIs. It does not make any AI model requests.
+
+### Do I need to copy cookies or session keys?
+
+No. Unlike most Claude usage trackers that require you to dig into browser dev tools and copy session cookies, CodeQuota uses proper OAuth authentication. Just click **Connect** and authorize in your browser — that's it.
+
+### Does it work with Claude Code?
+
+Yes. All Claude platforms — Claude Code, Claude.ai, the desktop app, and the mobile app — share the same underlying usage limits. CodeQuota monitors them all.
+
+### What plans are supported?
+
+CodeQuota works with **Claude Pro** and **Claude Max** subscriptions, and any GitHub Copilot plan that includes premium requests (Pro, Pro+, Business, Enterprise).
+
+### Is my data sent anywhere?
+
+No. Everything stays on your Mac. No telemetry, no analytics, no cloud sync. All credentials are stored locally.
+
 ## Project Structure
 
 ```
@@ -136,40 +170,19 @@ CodeQuota/
     └── release.yml                # Tag-based GitHub Actions release (DMG)
 ```
 
-## FAQ
-
-### Does CodeQuota consume any Claude tokens or Copilot requests?
-
-No. CodeQuota only reads usage and billing data from the respective APIs. It does not make any AI model requests.
-
-### What Claude plans are supported?
-
-CodeQuota works with **Claude Pro** and **Claude Max** subscriptions. It uses the same OAuth flow as Claude Code.
-
-### What Copilot plans are supported?
-
-Any GitHub Copilot plan that includes premium requests: Copilot Pro, Copilot Pro+, Copilot Business, and Copilot Enterprise.
-
-### Do I need to copy cookies or session keys?
-
-No. Unlike most Claude usage trackers that require you to dig into browser dev tools and copy session cookies, CodeQuota uses proper OAuth authentication. Just click **Connect** and authorize in your browser — that's it.
-
-### Does it work with Claude Code?
-
-Yes. All Claude platforms — Claude Code, Claude.ai, the desktop app, and the mobile app — share the same underlying usage limits. CodeQuota monitors them all.
-
-### Is my data sent anywhere?
-
-No. Everything stays on your Mac. No telemetry, no analytics, no cloud sync. All credentials are stored locally.
-
-### How do I track Claude Pro usage on my Mac?
-
-Install CodeQuota, connect your Anthropic account via OAuth, and your Claude Pro usage will appear in your menu bar with a color-coded indicator and optional reset countdown. It tracks your 5-hour session, weekly all-models, and weekly Sonnet limits automatically.
-
-### What do I do when Claude says "usage limit reached"?
-
-CodeQuota helps you avoid this by showing your usage in real time. If you're approaching a limit, the indicator turns yellow (50–80%) or red (>80%), giving you time to adjust your workflow before you hit the cap.
-
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
+Contributions are welcome! Here's how to get started:
+
+1. Fork the repo and clone it locally
+2. Open `CodeQuota.xcodeproj` in Xcode 15+
+3. Build and run with `Cmd+R` (requires macOS 13.0+)
+4. Make your changes and submit a pull request
+
+Check the [open issues](https://github.com/simaolucio/CodeQuota/issues) for ideas on what to work on, or open a new issue to discuss a feature or bug fix before starting.
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+
