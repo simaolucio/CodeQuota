@@ -1,0 +1,42 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build with xcodebuild
+        run: |
+          xcodebuild \
+            -project CodeQuota.xcodeproj \
+            -scheme CodeQuota \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Create DMG
+        run: |
+          hdiutil create \
+            -volname "CodeQuota" \
+            -srcfolder build/Build/Products/Release/CodeQuota.app \
+            -ov \
+            -format UDZO \
+            "CodeQuota-${{ github.ref_name }}.dmg"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: CodeQuota-*.dmg
+          generate_release_notes: true
