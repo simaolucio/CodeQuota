@@ -19,7 +19,7 @@ struct UsageIconView: View {
                 Text(String(format: "%.0f%%", pct))
                     .font(.system(size: 12, weight: .medium))
                 
-                if let time = time {
+                if settings.showResetTime, let time = time {
                     Text(time)
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
@@ -31,6 +31,7 @@ struct UsageIconView: View {
             }
         }
         .padding(.horizontal, 4)
+        .fixedSize()
     }
     
     /// Returns (percent, timeRemaining) for the currently selected metric
