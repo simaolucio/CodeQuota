@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1200 300" fill="none">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#0d0d0f"/>
@@ -24,26 +24,21 @@
   <!-- Decorative line -->
   <line x1="200" y1="260" x2="1000" y2="260" stroke="url(#accent)" stroke-width="1" stroke-opacity="0.2"/>
 
-  <!-- Logo mark — simplified asterisk + bolt -->
-  <g transform="translate(440, 80) scale(0.13)">
-    <!-- Asterisk shape -->
-    <path d="M512 80 L560 280 L740 160 L580 340 L780 390 L580 440 L740 560 L560 440 L512 640 L464 440 L284 560 L444 440 L244 390 L444 340 L284 160 L464 280 Z" fill="#7D6BF5" opacity="0.9"/>
-    <!-- Bolt overlay -->
-    <path d="M540 120 L420 380 L520 380 L480 600 L620 320 L520 320 Z" fill="#facc15" opacity="0.95"/>
-  </g>
+  <!-- Logo (original) -->
+  <image xlink:href="logo.png" x="370" y="35" width="100" height="100"/>
 
-  <!-- App name -->
-  <text x="600" y="145" text-anchor="middle" font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif" font-size="52" font-weight="700" letter-spacing="4" fill="white">
+  <!-- App name — to the right of the logo -->
+  <text x="640" y="95" text-anchor="middle" font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif" font-size="52" font-weight="700" letter-spacing="4" fill="white">
     <tspan fill="url(#accent)">Code</tspan><tspan fill="#ffffff">Quota</tspan>
   </text>
 
   <!-- Tagline -->
-  <text x="600" y="190" text-anchor="middle" font-family="'SF Pro Text', 'Helvetica Neue', Arial, sans-serif" font-size="18" fill="#9ca3af" letter-spacing="1">
+  <text x="600" y="170" text-anchor="middle" font-family="'SF Pro Text', 'Helvetica Neue', Arial, sans-serif" font-size="18" fill="#9ca3af" letter-spacing="1">
     Claude &amp; Copilot usage tracking for macOS
   </text>
 
   <!-- Pill badges -->
-  <g transform="translate(600, 220)" text-anchor="middle" font-family="'SF Mono', 'Menlo', monospace" font-size="12">
+  <g transform="translate(600, 215)" text-anchor="middle" font-family="'SF Mono', 'Menlo', monospace" font-size="12">
     <g transform="translate(-150, 0)">
       <rect x="-55" y="-12" width="110" height="24" rx="12" fill="#7D6BF5" fill-opacity="0.15" stroke="#7D6BF5" stroke-width="1" stroke-opacity="0.3"/>
       <text fill="#a78bfa" dy="4">Menu Bar</text>
