@@ -26,13 +26,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         // Borderless panel — no titlebar, no arrow, tight to content
-        panel = NSPanel(
+        panel = KeyablePanel(
             contentRect: .zero,
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: true
         )
         panel.isFloatingPanel = true
+        panel.becomesKeyOnlyIfNeeded = true
         panel.level = .statusBar
         panel.backgroundColor = .clear
         panel.hasShadow = true
@@ -94,6 +95,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             eventMonitor = nil
         }
     }
+}
+
+/// An NSPanel subclass that can become the key window, allowing text fields to receive keyboard input.
+class KeyablePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
 }
 
 /// An NSHostingView subclass that passes all mouse events through to its superview (the status bar button).
