@@ -15,6 +15,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Stamp version from git tag
+        run: |
+          VERSION_NUMBER="${GITHUB_REF_NAME#v}"
+          echo "Setting version to ${VERSION_NUMBER}"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION_NUMBER}" CodeQuota/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${VERSION_NUMBER}" CodeQuota/Info.plist
+
       - name: Resolve SPM dependencies
         run: |
           xcodebuild -resolvePackageDependencies \
