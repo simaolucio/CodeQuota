@@ -180,6 +180,37 @@ class ClaudeUsageManager: ObservableObject {
                     return
                 }
                 
+                // Handle 429 (rate limited)
+                // This is likely transient rate limiting on the usage endpoint.
+                // Preserve last known usage data instead of showing an error.
+                if statusCode == 429 {
+                    let bodyStr = String(data: data, encoding: .utf8) ?? "(no body)"
+                    self.log("fetchUsage: 429 RATE LIMITED")
+                    self.log("fetchUsage: 429 body=\(bodyStr)")
+                    
+                    // Log relevant headers for diagnostics
+                    if let httpResp = httpResponse {
+                        let headers = httpResp.allHeaderFields
+                        if let retryAfter = headers["Retry-After"] ?? headers["retry-after"] {
+                            self.log("fetchUsage: 429 Retry-After=\(retryAfter)")
+                        }
+                        for (key, value) in headers {
+                            if let keyStr = key as? String, keyStr.lowercased().contains("ratelimit") {
+                                self.log("fetchUsage: 429 \(keyStr)=\(value)")
+                            }
+                        }
+                    }
+                    
+                    // Keep existing data if we have it, otherwise show error
+                    if case .loaded = self.state {
+                        self.log("fetchUsage: 429 - keeping previous usage data")
+                        // Don't change state - keep showing last known good data
+                    } else {
+                        self.state = .error("Rate limited. Please wait and try again.")
+                    }
+                    return
+                }
+                
                 if statusCode < 200 || statusCode >= 300 {
                     let bodyStr = String(data: data, encoding: .utf8) ?? ""
                     self.log("fetchUsage: HTTP \(statusCode) body=\(bodyStr.prefix(200))")
