@@ -28,5 +28,16 @@
           length="2053842"
           type="application/octet-stream" />
   </item>
+  <item>
+      <title>Version 0.2.2</title>
+      <pubDate>Sat, 07 Mar 2026 12:45:40 +0000</pubDate>
+      <sparkle:version>0.2.2</sparkle:version>
+      <sparkle:shortVersionString>0.2.2</sparkle:shortVersionString>
+      <enclosure
+          url="https://github.com/simaolucio/CodeQuota/releases/download/v0.2.2/CodeQuota-v0.2.2.zip"
+          sparkle:edSignature="f9ZK92J2fSdu4MfdjtWxtxk2UB7EpeQUz9g4lRQy5dciX4Rl0kAMdOLfN69hEvdx1q3/0Qbq50fPepp/AfvADg=="
+          length="2055109"
+          type="application/octet-stream" />
+  </item>
     </channel>
 </rss>
