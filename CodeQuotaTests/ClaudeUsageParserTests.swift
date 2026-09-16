@@ -168,8 +168,8 @@ final class ClaudeUsageParserTests: XCTestCase {
         switch result {
         case .success(let usage):
             XCTAssertEqual(usage.fiveHour.percent, 0.25)
-            XCTAssertEqual(usage.dailyAllModels.percent, 0.50)
-            XCTAssertEqual(usage.dailySonnet.percent, 0.10)
+            XCTAssertEqual(usage.weeklyAll.percent, 0.50)
+            XCTAssertEqual(usage.weeklyModel.percent, 0.10)
             XCTAssertNotNil(usage.fiveHour.resetAt)
         case .failure(let error):
             XCTFail("Expected success, got failure: \(error)")
@@ -188,8 +188,8 @@ final class ClaudeUsageParserTests: XCTestCase {
         switch result {
         case .success(let usage):
             XCTAssertEqual(usage.fiveHour.percent, 0.30)
-            XCTAssertEqual(usage.dailyAllModels.percent, 0.60)
-            XCTAssertEqual(usage.dailySonnet.percent, 0.15)
+            XCTAssertEqual(usage.weeklyAll.percent, 0.60)
+            XCTAssertEqual(usage.weeklyModel.percent, 0.15)
         case .failure(let error):
             XCTFail("Expected success, got failure: \(error)")
         }
@@ -207,8 +207,8 @@ final class ClaudeUsageParserTests: XCTestCase {
         switch result {
         case .success(let usage):
             XCTAssertEqual(usage.fiveHour.percent, 0.20)
-            XCTAssertEqual(usage.dailyAllModels.percent, 0.40)
-            XCTAssertEqual(usage.dailySonnet.percent, 0.05)
+            XCTAssertEqual(usage.weeklyAll.percent, 0.40)
+            XCTAssertEqual(usage.weeklyModel.percent, 0.05)
         case .failure(let error):
             XCTFail("Expected success, got failure: \(error)")
         }
@@ -225,8 +225,8 @@ final class ClaudeUsageParserTests: XCTestCase {
         switch result {
         case .success(let usage):
             XCTAssertEqual(usage.fiveHour.percent, 0.80)
-            XCTAssertEqual(usage.dailyAllModels.percent, 0)
-            XCTAssertEqual(usage.dailySonnet.percent, 0)
+            XCTAssertEqual(usage.weeklyAll.percent, 0)
+            XCTAssertEqual(usage.weeklyModel.percent, 0)
         case .failure(let error):
             XCTFail("Expected success, got failure: \(error)")
         }
@@ -275,8 +275,8 @@ final class ClaudeUsageParserTests: XCTestCase {
         case .success(let usage):
             // Sorted alphabetically: alpha=0.10, beta=0.20, gamma=0.30
             XCTAssertEqual(usage.fiveHour.percent, 0.10)
-            XCTAssertEqual(usage.dailyAllModels.percent, 0.20)
-            XCTAssertEqual(usage.dailySonnet.percent, 0.30)
+            XCTAssertEqual(usage.weeklyAll.percent, 0.20)
+            XCTAssertEqual(usage.weeklyModel.percent, 0.30)
         case .failure(let error):
             XCTFail("Expected success via dynamic fallback, got failure: \(error)")
         }
@@ -294,6 +294,72 @@ final class ClaudeUsageParserTests: XCTestCase {
             XCTAssertEqual(usage.fiveHour.percent, 100)
         case .failure(let error):
             XCTFail("Expected success, got failure: \(error)")
+        }
+    }
+
+    // MARK: - limits[] (current API shape)
+    
+    func testParseResponse_limitsArray_isAuthoritative() {
+        let data = jsonData([
+            "five_hour": ["utilization": 7.0, "resets_at": "2026-09-16T23:30:00.925212+00:00"],
+            "seven_day": ["utilization": 12.0, "resets_at": "2026-09-21T20:59:59.925236+00:00"],
+            "seven_day_sonnet": NSNull(),
+            "seven_day_opus": NSNull(),
+            "limits": [
+                ["kind": "session", "group": "session", "percent": 7, "resets_at": "2026-09-16T23:30:00.925212+00:00", "scope": NSNull()],
+                ["kind": "weekly_all", "group": "weekly", "percent": 12, "resets_at": "2026-09-21T20:59:59.925236+00:00", "scope": NSNull()],
+                ["kind": "weekly_scoped", "group": "weekly", "percent": 63, "resets_at": "2026-09-21T21:00:00.925435+00:00",
+                 "scope": ["model": ["id": NSNull(), "display_name": "Fable"], "surface": NSNull()]]
+            ]
+        ])
+        
+        switch ClaudeUsageParser.parseResponse(data) {
+        case .success(let usage):
+            XCTAssertEqual(usage.fiveHour.percent, 7)
+            XCTAssertEqual(usage.weeklyAll.percent, 12)
+            XCTAssertEqual(usage.weeklyModel.percent, 63)
+            XCTAssertEqual(usage.weeklyModelName, "Fable")
+            XCTAssertEqual(usage.weeklyModelLabel, "Fable")
+            XCTAssertNotNil(usage.weeklyModel.resetAt)
+        case .failure(let error):
+            XCTFail("Expected success, got \(error)")
+        }
+    }
+    
+    func testParseLimits_prefersFableAmongScoped() {
+        let json: [String: Any] = ["limits": [
+            ["kind": "weekly_scoped", "percent": 40, "scope": ["model": ["display_name": "Opus"]]],
+            ["kind": "weekly_scoped", "percent": 55, "scope": ["model": ["display_name": "Fable"]]],
+        ]]
+        let limits = ClaudeUsageParser.parseLimits(json)
+        XCTAssertEqual(limits.weeklyModel?.percent, 55)
+        XCTAssertEqual(limits.weeklyModelName, "Fable")
+    }
+    
+    func testParseLimits_fallsBackToFirstScopedModel() {
+        let json: [String: Any] = ["limits": [
+            ["kind": "weekly_scoped", "percent": 40, "scope": ["model": ["display_name": "Opus"]]],
+        ]]
+        let limits = ClaudeUsageParser.parseLimits(json)
+        XCTAssertEqual(limits.weeklyModel?.percent, 40)
+        XCTAssertEqual(limits.weeklyModelName, "Opus")
+    }
+    
+    func testParseLimits_ignoresSurfaceScopedEntries() {
+        let json: [String: Any] = ["limits": [
+            ["kind": "weekly_scoped", "percent": 90, "scope": ["model": NSNull(), "surface": "cowork"]],
+        ]]
+        let limits = ClaudeUsageParser.parseLimits(json)
+        XCTAssertNil(limits.weeklyModel)
+    }
+    
+    func testParseResponse_legacyModelKeyNamesModel() {
+        let data = jsonData(["five_hour": ["utilization": 0.1], "seven_day_sonnet": ["utilization": 0.2]])
+        if case .success(let usage) = ClaudeUsageParser.parseResponse(data) {
+            XCTAssertEqual(usage.weeklyModel.percent, 0.2)
+            XCTAssertEqual(usage.weeklyModelName, "Sonnet")
+        } else {
+            XCTFail("Expected success")
         }
     }
 }

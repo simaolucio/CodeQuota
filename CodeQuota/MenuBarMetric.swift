@@ -3,14 +3,14 @@ import Foundation
 enum MenuBarMetric: String, CaseIterable, Codable {
     case claude5Hour = "claude_5hour"
     case claudeWeeklyAll = "claude_weekly_all"
-    case claudeWeeklySonnet = "claude_weekly_sonnet"
+    case claudeWeeklyModel = "claude_weekly_model"
     case copilotPremium = "copilot_premium"
     
     var displayName: String {
         switch self {
         case .claude5Hour: return "Claude — 5-Hour Session"
         case .claudeWeeklyAll: return "Claude — Weekly All Models"
-        case .claudeWeeklySonnet: return "Claude — Weekly Sonnet"
+        case .claudeWeeklyModel: return "Claude — Weekly \(ClaudeUsage.preferredModelName)"
         case .copilotPremium: return "Copilot — Premium Requests"
         }
     }
@@ -19,14 +19,14 @@ enum MenuBarMetric: String, CaseIterable, Codable {
         switch self {
         case .claude5Hour: return "5h"
         case .claudeWeeklyAll: return "Wk"
-        case .claudeWeeklySonnet: return "Son"
+        case .claudeWeeklyModel: return "Fab"
         case .copilotPremium: return "CP"
         }
     }
     
     var providerName: String {
         switch self {
-        case .claude5Hour, .claudeWeeklyAll, .claudeWeeklySonnet: return "Claude"
+        case .claude5Hour, .claudeWeeklyAll, .claudeWeeklyModel: return "Claude"
         case .copilotPremium: return "Copilot"
         }
     }
@@ -68,14 +68,14 @@ class MenuBarSettings: ObservableObject {
         self.defaults = defaults
         
         if let raw = defaults.string(forKey: Self.key),
-           let metric = MenuBarMetric(rawValue: raw) {
+           let metric = MenuBarMetric(rawValue: Self.migrateRawValue(raw)) {
             selectedMetric = metric
         } else {
             selectedMetric = .claude5Hour
         }
         
         if let rawValues = defaults.stringArray(forKey: Self.hiddenKey) {
-            hiddenMetrics = Set(rawValues.compactMap { MenuBarMetric(rawValue: $0) })
+            hiddenMetrics = Set(rawValues.compactMap { MenuBarMetric(rawValue: Self.migrateRawValue($0)) })
         } else {
             hiddenMetrics = []
         }
@@ -86,6 +86,12 @@ class MenuBarSettings: ObservableObject {
         } else {
             showResetTime = true
         }
+    }
+    
+    /// Map raw values persisted by older versions onto current cases.
+    /// The weekly Sonnet metric became the weekly model (Fable) metric.
+    static func migrateRawValue(_ raw: String) -> String {
+        raw == "claude_weekly_sonnet" ? MenuBarMetric.claudeWeeklyModel.rawValue : raw
     }
     
     func isVisible(_ metric: MenuBarMetric) -> Bool {

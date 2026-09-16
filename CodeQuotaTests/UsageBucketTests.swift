@@ -63,11 +63,11 @@ final class UsageBucketTests: XCTestCase {
     func testClaudeUsageEmpty() {
         let empty = ClaudeUsage.empty
         XCTAssertEqual(empty.fiveHour.percent, 0)
-        XCTAssertEqual(empty.dailyAllModels.percent, 0)
-        XCTAssertEqual(empty.dailySonnet.percent, 0)
+        XCTAssertEqual(empty.weeklyAll.percent, 0)
+        XCTAssertEqual(empty.weeklyModel.percent, 0)
         XCTAssertNil(empty.fiveHour.resetAt)
-        XCTAssertNil(empty.dailyAllModels.resetAt)
-        XCTAssertNil(empty.dailySonnet.resetAt)
+        XCTAssertNil(empty.weeklyAll.resetAt)
+        XCTAssertNil(empty.weeklyModel.resetAt)
     }
     
     // MARK: - Equatable

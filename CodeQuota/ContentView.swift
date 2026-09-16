@@ -6,6 +6,7 @@ struct ContentView: View {
     @StateObject private var anthropicAuth = AnthropicAuthManager.shared
     @StateObject private var githubAuth = GitHubAuthManager.shared
     @StateObject private var settings = MenuBarSettings.shared
+    @StateObject private var accounts = ClaudeAccountsManager.shared
     @State private var isRefreshing = false
     @State private var showSettings = false
     
@@ -97,6 +98,14 @@ struct ContentView: View {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.secondary.opacity(0.6))
                 
+                if let active = accounts.activeAccount {
+                    Text(active.displayName)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary.opacity(0.4))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                
                 Spacer()
                 
                 Text(claudeUsage.lastUpdateText)
@@ -132,23 +141,23 @@ struct ContentView: View {
                     }
                     
                     let showWeeklyAll = settings.isVisible(.claudeWeeklyAll)
-                    let showSonnet = settings.isVisible(.claudeWeeklySonnet)
+                    let showModel = settings.isVisible(.claudeWeeklyModel)
                     
-                    if showWeeklyAll && showSonnet {
+                    if showWeeklyAll && showModel {
                         // Both visible — side by side
                         HStack(spacing: 8) {
                             GradientTile(
                                 icon: "calendar",
                                 title: "Weekly All",
-                                percentage: usage.dailyAllModels.percent,
-                                detail: usage.dailyAllModels.timeRemainingString,
+                                percentage: usage.weeklyAll.percent,
+                                detail: usage.weeklyAll.timeRemainingString,
                                 compact: true
                             )
                             GradientTile(
                                 icon: "sparkles",
-                                title: "Sonnet",
-                                percentage: usage.dailySonnet.percent,
-                                detail: usage.dailySonnet.timeRemainingString,
+                                title: usage.weeklyModelLabel,
+                                percentage: usage.weeklyModel.percent,
+                                detail: usage.weeklyModel.timeRemainingString,
                                 compact: true
                             )
                         }
@@ -156,15 +165,15 @@ struct ContentView: View {
                         GradientTile(
                             icon: "calendar",
                             title: "Weekly — All Models",
-                            percentage: usage.dailyAllModels.percent,
-                            detail: usage.dailyAllModels.timeRemainingString
+                            percentage: usage.weeklyAll.percent,
+                            detail: usage.weeklyAll.timeRemainingString
                         )
-                    } else if showSonnet {
+                    } else if showModel {
                         GradientTile(
                             icon: "sparkles",
-                            title: "Weekly — Sonnet",
-                            percentage: usage.dailySonnet.percent,
-                            detail: usage.dailySonnet.timeRemainingString
+                            title: "Weekly — \(usage.weeklyModelLabel)",
+                            percentage: usage.weeklyModel.percent,
+                            detail: usage.weeklyModel.timeRemainingString
                         )
                     }
                 }
@@ -176,6 +185,12 @@ struct ContentView: View {
                     .padding(.horizontal, 24).padding(.bottom, 16)
             }
             
+            if accounts.isAvailable {
+                accountsList
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
+            }
+            
             // Thin divider from alt-3
             Rectangle()
                 .fill(Color.primary.opacity(0.06))
@@ -183,6 +198,131 @@ struct ContentView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
         }
+    }
+    
+    // MARK: - Accounts (claude-swap)
+    
+    private var accountsList: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("ACCOUNTS")
+                    .font(.system(size: 9, weight: .semibold))
+                    .tracking(1.5)
+                    .foregroundColor(.secondary.opacity(0.35))
+                Spacer()
+                if accounts.isRefreshing {
+                    ProgressView().controlSize(.mini)
+                }
+            }
+            .padding(.bottom, 2)
+            
+            ForEach(accounts.accounts) { account in
+                accountRow(account)
+            }
+            
+            if let error = accounts.lastError {
+                Text(error)
+                    .font(.system(size: 10))
+                    .foregroundColor(.red.opacity(0.7))
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach(accounts.lastSwitchWarnings, id: \.self) { warning in
+                Text(warning)
+                    .font(.system(size: 10))
+                    .foregroundColor(.orange.opacity(0.8))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+    
+    private func accountRow(_ account: ClaudeAccount) -> some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(accountColor(account))
+                .frame(width: 7, height: 7)
+                .overlay(
+                    Circle().stroke(Color(red: 0.49, green: 0.42, blue: 0.96), lineWidth: account.isActive ? 1.5 : 0)
+                        .frame(width: 11, height: 11)
+                )
+            
+            VStack(alignment: .leading, spacing: 1) {
+                Text(account.displayName)
+                    .font(.system(size: 11, weight: account.isActive ? .medium : .regular))
+                    .foregroundColor(.primary.opacity(account.isActive ? 0.8 : 0.6))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                
+                if let usage = account.usage {
+                    HStack(spacing: 6) {
+                        usageChip("5h", usage.fiveHour.percent)
+                        usageChip("Wk", usage.weeklyAll.percent)
+                        usageChip(usage.weeklyModelLabel, usage.weeklyModel.percent)
+                        if let status = account.statusText {
+                            Text(status)
+                                .font(.system(size: 9))
+                                .foregroundColor(.secondary.opacity(0.4))
+                        }
+                    }
+                } else {
+                    Text(account.statusText ?? "no data")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary.opacity(0.4))
+                }
+            }
+            
+            Spacer()
+            
+            if account.isActive {
+                Text("active")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary.opacity(0.35))
+            } else if accounts.switchingTo == account.number {
+                ProgressView().controlSize(.small).scaleEffect(0.7)
+            } else {
+                Button(action: { accounts.switchTo(account.number) }) {
+                    Text("Switch")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(Color(red: 0.49, green: 0.42, blue: 0.96))
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(accounts.switchingTo != nil)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+    
+    /// Colour-coded metric capsule: tint follows the same scale as the tiles
+    /// (green < 50 %, yellow < 80 %, red otherwise) so status reads at a glance.
+    private func usageChip(_ label: String, _ percent: Double) -> some View {
+        let color = Self.usageColor(percent)
+        return HStack(spacing: 4) {
+            Text(label)
+                .font(.system(size: 9))
+                .foregroundColor(color.opacity(0.9))
+            Text("\(Int(percent.rounded()))%")
+                .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                .foregroundColor(color)
+        }
+        .padding(.horizontal, 5)
+        .padding(.vertical, 2)
+        .background(color.opacity(0.14))
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(color.opacity(0.35), lineWidth: 0.5))
+    }
+    
+    /// Shared threshold scale (matches GradientTile.tileColor).
+    static func usageColor(_ percent: Double) -> Color {
+        if percent < 50 { return .green }
+        if percent < 80 { return .yellow }
+        return .red
+    }
+    
+    /// Worst of an account's buckets, used to tint its status pip.
+    private func accountColor(_ account: ClaudeAccount) -> Color {
+        guard let u = account.usage else { return Color.primary.opacity(0.15) }
+        let worst = max(u.fiveHour.percent, u.weeklyAll.percent, u.weeklyModel.percent)
+        return Self.usageColor(worst)
     }
     
     // MARK: - Copilot Section
@@ -281,7 +421,7 @@ struct ContentView: View {
     // MARK: - Helpers
     
     private var hasVisibleClaudeMetrics: Bool {
-        settings.isVisible(.claude5Hour) || settings.isVisible(.claudeWeeklyAll) || settings.isVisible(.claudeWeeklySonnet)
+        settings.isVisible(.claude5Hour) || settings.isVisible(.claudeWeeklyAll) || settings.isVisible(.claudeWeeklyModel)
     }
     
     // MARK: - Inline Error

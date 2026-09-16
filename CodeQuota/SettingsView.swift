@@ -8,6 +8,9 @@ struct SettingsView: View {
     @ObservedObject var anthropicAuth = AnthropicAuthManager.shared
     @ObservedObject var githubAuth = GitHubAuthManager.shared
     @ObservedObject var menuBarSettings = MenuBarSettings.shared
+    @ObservedObject var accounts = ClaudeAccountsManager.shared
+    @State private var showAddAccount = false
+    @State private var newAccountAlias = ""
     @ObservedObject var updater = UpdaterViewModel.shared!
     @State private var anthropicCode: String = ""
     @State private var anthropicURL: URL?
@@ -122,6 +125,21 @@ struct SettingsView: View {
                     .padding(.leading, 20)
                     .padding(.top, 4)
                     .padding(.bottom, 4)
+            } else if let error = anthropicAuth.authError {
+                Text(error)
+                    .font(.system(size: 10))
+                    .foregroundColor(.red.opacity(0.7))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 20)
+                    .padding(.bottom, 4)
+            }
+            
+            // Claude accounts managed by claude-swap (cswap)
+            if accounts.isAvailable {
+                claudeAccountsBlock
+                    .padding(.leading, 20)
+                    .padding(.top, 2)
+                    .padding(.bottom, 6)
             }
             
             // GitHub row
@@ -147,9 +165,16 @@ struct SettingsView: View {
                 .frame(width: 7, height: 7)
             
             if anthropicAuth.isConnected {
-                Text("Anthropic")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.primary.opacity(0.7))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Anthropic")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.primary.opacity(0.7))
+                    if anthropicAuth.source == .claudeCode {
+                        Text(claudeCodeSubtitle)
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary.opacity(0.5))
+                    }
+                }
                 
                 Spacer()
                 
@@ -173,11 +198,28 @@ struct SettingsView: View {
                 
                 Spacer()
                 
+                // Preferred: reuse the Claude Code CLI login (no browser flow).
                 Button(action: {
+                    anthropicAuth.connectWithClaudeCode()
+                    showingAnthropicFlow = false
+                }) {
+                    Text("Use Claude Code login")
+                        .font(.system(size: 11))
+                        .foregroundColor(violet)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Text("·")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary.opacity(0.3))
+                
+                // Fallback: CodeQuota's own OAuth flow.
+                Button(action: {
+                    anthropicAuth.authError = nil
                     anthropicURL = anthropicAuth.generateAuthorizationURL()
                     showingAnthropicFlow = true
                 }) {
-                    Text("Connect")
+                    Text("Sign in")
                         .font(.system(size: 11))
                         .foregroundColor(violet)
                 }
@@ -185,6 +227,148 @@ struct SettingsView: View {
             }
         }
         .padding(.vertical, 6)
+    }
+    
+    private var claudeCodeSubtitle: String {
+        var parts = ["via Claude Code login"]
+        if let sub = anthropicAuth.claudeCodeSubscription, !sub.isEmpty {
+            parts.append(sub.capitalized)
+        }
+        return parts.joined(separator: " · ")
+    }
+    
+    // MARK: - Claude Accounts (cswap)
+    
+    private var claudeAccountsBlock: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("\(accounts.accounts.count) account\(accounts.accounts.count == 1 ? "" : "s") via cswap")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary.opacity(0.45))
+                Spacer()
+                Button(action: {
+                    showAddAccount.toggle()
+                    accounts.lastAddMessage = nil
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: showAddAccount ? "minus" : "plus")
+                            .font(.system(size: 8, weight: .semibold))
+                        Text(showAddAccount ? "Cancel" : "Add account")
+                            .font(.system(size: 11))
+                    }
+                    .foregroundColor(violet)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            ForEach(accounts.accounts) { account in
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(account.isActive ? violet : Color.primary.opacity(0.15))
+                        .frame(width: 5, height: 5)
+                    Text(account.displayName)
+                        .font(.system(size: 10))
+                        .foregroundColor(.primary.opacity(0.55))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    if let status = account.statusText {
+                        Text(status)
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary.opacity(0.4))
+                    }
+                    Spacer()
+                    if account.isActive {
+                        Text("active")
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary.opacity(0.35))
+                    }
+                }
+            }
+            
+            if showAddAccount {
+                addAccountPanel
+                    .padding(.top, 4)
+            }
+        }
+    }
+    
+    /// Guided flow mirroring `cswap add`: sign in to Claude Code with the other
+    /// account, then register that login. Do not log out first; Claude Code
+    /// may revoke the refresh token of the account being left.
+    private var addAccountPanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 6) {
+                stepBadge("1")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Sign in to Claude Code with the other account.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.primary.opacity(0.6))
+                    Button(action: { accounts.openTerminalForLogin() }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "terminal")
+                                .font(.system(size: 10))
+                            Text("Open Terminal: claude auth login")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .foregroundColor(violet)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    Text("Don't log out first — Claude Code may revoke the token of the account you're leaving.")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary.opacity(0.4))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            
+            HStack(alignment: .top, spacing: 6) {
+                stepBadge("2")
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Register that login with cswap.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.primary.opacity(0.6))
+                    HStack(spacing: 8) {
+                        TextField("Alias (optional)", text: $newAccountAlias)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 11))
+                            .frame(maxWidth: 160)
+                            .disabled(accounts.isAdding)
+                        Button(action: {
+                            accounts.addCurrentLogin(alias: newAccountAlias)
+                        }) {
+                            if accounts.isAdding {
+                                ProgressView().controlSize(.small).frame(width: 110)
+                            } else {
+                                Text("Add current login")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(violet)
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .disabled(accounts.isAdding)
+                    }
+                }
+            }
+            
+            if let msg = accounts.lastAddMessage {
+                Text(msg)
+                    .font(.system(size: 10))
+                    .foregroundColor(accounts.lastAddSucceeded ? .green.opacity(0.8) : .red.opacity(0.7))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .onAppear {
+                        if accounts.lastAddSucceeded { newAccountAlias = "" }
+                    }
+            }
+        }
+        .padding(10)
+        .background(Color.primary.opacity(0.04))
+        .cornerRadius(8)
+    }
+    
+    private func stepBadge(_ n: String) -> some View {
+        Text(n)
+            .font(.system(size: 9, weight: .semibold, design: .monospaced))
+            .foregroundColor(.secondary.opacity(0.4))
+            .frame(width: 12)
     }
     
     // MARK: - GitHub Row
@@ -488,7 +672,7 @@ struct SettingsView: View {
     private var availableMetrics: [MenuBarMetric] {
         var metrics: [MenuBarMetric] = []
         if anthropicAuth.isConnected {
-            metrics.append(contentsOf: [.claude5Hour, .claudeWeeklyAll, .claudeWeeklySonnet])
+            metrics.append(contentsOf: [.claude5Hour, .claudeWeeklyAll, .claudeWeeklyModel])
         }
         if githubAuth.isConnected {
             metrics.append(.copilotPremium)

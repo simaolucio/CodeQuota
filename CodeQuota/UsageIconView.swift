@@ -48,11 +48,11 @@ struct UsageIconView: View {
             
         case .claudeWeeklyAll:
             guard anthropicAuth.isConnected, case .loaded(let u) = claudeUsage.state else { return (nil, nil) }
-            return (u.dailyAllModels.percent, u.dailyAllModels.timeRemainingString)
+            return (u.weeklyAll.percent, u.weeklyAll.timeRemainingString)
             
-        case .claudeWeeklySonnet:
+        case .claudeWeeklyModel:
             guard anthropicAuth.isConnected, case .loaded(let u) = claudeUsage.state else { return (nil, nil) }
-            return (u.dailySonnet.percent, u.dailySonnet.timeRemainingString)
+            return (u.weeklyModel.percent, u.weeklyModel.timeRemainingString)
             
         case .copilotPremium:
             guard githubAuth.isConnected, case .loaded(let u) = copilotUsage.state else { return (nil, nil) }

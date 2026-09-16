@@ -41,7 +41,7 @@ The official dashboards are buried. Checking usage means context-switching, logg
 
 | Glanceable | Privacy-first | Real-time | OAuth — No cookies |
 |---|---|---|---|
-| Usage % + reset time right in your menu bar | All data stays on your Mac. Zero telemetry | Claude polls every 30s, Copilot every 2min | Proper auth flow, no dev tools required |
+| Usage % + reset time right in your menu bar | All data stays on your Mac. Zero telemetry | Claude polls every 3min, Copilot every 2min | Proper auth flow, no dev tools required |
 
 ### Full Feature List
 
@@ -82,13 +82,32 @@ open CodeQuota.xcodeproj
 
 ### Connect Anthropic (Claude Pro / Claude Max)
 
+**Recommended: reuse your Claude Code login.** If the [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI is installed and signed in (`claude` → `/login`), CodeQuota picks up that session automatically on launch. Nothing else to do. It reads the credential Claude Code stores in the macOS Keychain (item "Claude Code-credentials") or in `~/.claude/.credentials.json`, read-only. Claude Code keeps the token fresh; CodeQuota never uses its refresh token.
+
+If you disconnected it, or signed into Claude Code later, open **Settings** and click **Use Claude Code login**.
+
+**Several accounts (claude-swap).** If you use [claude-swap](https://github.com/realiti4/claude-swap) (`cswap`) to manage more than one Claude account, CodeQuota detects it and switches to multi-account mode automatically:
+
+- The popover lists every cswap account with its 5-hour, weekly, and Fable usage, and marks the active one.
+- Click **Switch** next to an account to run `cswap switch <n>`; the active Claude Code login changes and the tiles update.
+- In **Settings**, under Anthropic, click **Add account** to register another account. Step 1 opens Terminal running `claude auth login`, where you sign in with the other account (do not log out first; Claude Code may revoke the token of the account you are leaving). Step 2, **Add current login**, runs `cswap add` (with an optional alias) and the new account appears in the list.
+- All Claude usage then comes from cswap's own cache (`cswap list --json`), so CodeQuota adds no extra requests against the usage endpoint's per-account budget.
+
+CodeQuota looks for `cswap` in `~/.local/bin`, `/opt/homebrew/bin`, and `/usr/local/bin`. Set the `cswap_path` user default to point elsewhere:
+
+```bash
+defaults write com.codequota.app cswap_path /path/to/cswap
+```
+
+**Fallback: sign in from CodeQuota.** If you don't use Claude Code:
+
 1. Launch CodeQuota — it appears in your menu bar
 2. Click the menu bar icon, then **Settings**
-3. Click **Connect** next to Anthropic — this opens the authorization page in your browser
+3. Click **Sign in** next to Anthropic — this opens the authorization page in your browser
 4. Authorize the app, copy the code shown on the page
 5. Paste the code into the app and click **Submit**
 
-CodeQuota uses Anthropic's OAuth PKCE flow (the same one used by Claude Code) to authenticate. No cookies or session keys required.
+This uses Anthropic's OAuth PKCE flow. No cookies or session keys required.
 
 ### Connect GitHub (Copilot Premium Requests)
 
@@ -114,7 +133,7 @@ The **Show reset time** toggle (on by default) controls whether the reset countd
 
 ### Claude (Anthropic)
 
-Once authenticated, CodeQuota polls the Anthropic usage API every 30 seconds. It tracks three metrics: your 5-hour rolling session utilization with a reset countdown, your 7-day usage across all Claude models, and your 7-day Sonnet-specific usage. These are the same limits that apply across Claude Code, Claude.ai, the desktop app, and the mobile app — they all share the same quota.
+Once authenticated, CodeQuota polls the Anthropic usage API every 3 minutes (the endpoint allows roughly 30 requests per hour per account for third-party clients; polling faster just produces HTTP 429s). A manual refresh is always allowed unless the server has asked us to back off. It tracks three metrics: your 5-hour rolling session utilization with a reset countdown, your 7-day usage across all Claude models, and the 7-day model-specific limit the API reports (currently Fable; the label follows whatever model the API names). These are the same limits that apply across Claude Code, Claude.ai, the desktop app, and the mobile app — they all share the same quota.
 
 ### Copilot (GitHub)
 
@@ -122,9 +141,9 @@ Once authenticated, CodeQuota fetches your monthly premium request billing data 
 
 ### Data & Security
 
-All credentials are stored locally on your Mac in UserDefaults. Anthropic tokens are refreshed automatically. No data is sent to any third-party servers — no telemetry, no analytics, no cloud sync.
+When using the Claude Code login, CodeQuota stores no Anthropic credential of its own; it reads Claude Code's on demand. Credentials from the fallback sign-in flow are stored locally in UserDefaults and refreshed automatically. No data is sent to any third-party servers — no telemetry, no analytics, no cloud sync.
 
-> **Note:** Credentials are currently stored in `UserDefaults`. Migration to macOS Keychain for encrypted credential storage is planned for a future release.
+> **Note:** CodeQuota is not sandboxed. Multi-account mode has to run your `cswap` CLI and read Claude Code's Keychain item, neither of which is reachable from inside the App Sandbox. Fallback sign-in credentials are stored in `UserDefaults`; Keychain storage for those is planned.
 
 ## FAQ
 
@@ -158,7 +177,10 @@ CodeQuota/
 ├── SettingsView.swift             # Settings UI (accounts, metrics, Ko-fi)
 ├── UsageIconView.swift            # Menu bar icon (configurable metric + reset time)
 ├── ClaudeUsageManager.swift       # Claude usage data fetching and parsing
-├── AnthropicAuthManager.swift     # Anthropic OAuth PKCE authentication
+├── AnthropicAuthManager.swift     # Anthropic auth: Claude Code login (preferred) or OAuth PKCE
+├── ClaudeCodeCredentials.swift    # Reads Claude Code's Keychain / .credentials.json session
+├── CswapClient.swift              # Runs `cswap list/switch --json` and parses the output
+├── ClaudeAccountsManager.swift    # Multi-account state, switching, feeds the usage manager
 ├── GitHubAuthManager.swift        # GitHub device flow OAuth
 ├── CopilotUsageManager.swift      # Copilot premium request billing
 ├── MenuBarMetric.swift            # Menu bar metric selection and settings

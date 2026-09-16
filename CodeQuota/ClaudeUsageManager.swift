@@ -27,14 +27,23 @@ struct UsageBucket: Equatable {
 }
 
 struct ClaudeUsage: Equatable {
+    /// Model whose weekly limit is shown as the third metric.
+    static let preferredModelName = "Fable"
+
     var fiveHour: UsageBucket
-    var dailyAllModels: UsageBucket
-    var dailySonnet: UsageBucket
-    
+    var weeklyAll: UsageBucket
+    /// Weekly limit scoped to one model (Fable on current plans).
+    var weeklyModel: UsageBucket
+    /// Display name of the model behind `weeklyModel`, as reported by the API.
+    var weeklyModelName: String?
+
+    var weeklyModelLabel: String { weeklyModelName ?? Self.preferredModelName }
+
     static let empty = ClaudeUsage(
         fiveHour: UsageBucket(percent: 0, resetAt: nil),
-        dailyAllModels: UsageBucket(percent: 0, resetAt: nil),
-        dailySonnet: UsageBucket(percent: 0, resetAt: nil)
+        weeklyAll: UsageBucket(percent: 0, resetAt: nil),
+        weeklyModel: UsageBucket(percent: 0, resetAt: nil),
+        weeklyModelName: nil
     )
 }
 
@@ -76,28 +85,77 @@ class ClaudeUsageManager: ObservableObject {
         }
     }
     
+    // MARK: - Polling policy
+    //
+    // The usage endpoint enforces a budget on third-party clients of roughly
+    // 28-30 requests per identity per rolling hour (measured by the claude-swap
+    // project). Polling every 30 s exceeded that and produced constant HTTP 429s.
+    // Target: at most ~20 requests/hour, leaving headroom for manual refreshes.
+    static let pollInterval: TimeInterval = 180
+    /// Data younger than this is considered fresh; opening the popover does not
+    /// trigger a new fetch while it holds.
+    static let serveTTL: TimeInterval = 180
+    /// Wait after a 429 that carried no usable Retry-After.
+    static let defaultBackoff: TimeInterval = 300
+    /// Extra wait on top of Retry-After: a retry landing exactly on the server's
+    /// deadline is frequently re-blocked for another full window.
+    static let retryAfterMargin: TimeInterval = 120
+    /// Upper bound on any single backoff so a pathological header cannot park
+    /// the app for hours.
+    static let maxBackoff: TimeInterval = 3900
+
+    /// Earliest time the next network request is allowed after a 429.
+    private(set) var backoffUntil: Date?
+
     func startAutoRefresh() {
         // Invalidate existing timers to avoid duplicates
         refreshTimer?.invalidate()
         textTimer?.invalidate()
-        
-        // Refresh usage every 30 seconds
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            self?.refresh()
+
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
+            self?.refresh(force: false)
         }
-        
+
         // Update "updated X ago" text every second
         textTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             self?.updateLastUpdateText()
         }
-        
-        // Initial refresh
-        refresh()
+
+        // Initial refresh, unless we already have fresh data (the popover calls
+        // this every time it opens).
+        refresh(force: false)
     }
-    
-    func refresh() {
+
+    /// True when claude-swap is installed; usage then comes from cswap for all
+    /// accounts (see ClaudeAccountsManager) instead of a direct API poll.
+    var usesCswap: Bool { ClaudeAccountsManager.shared.isAvailable }
+
+    /// - Parameter force: `true` for a user-initiated refresh (bypasses the
+    ///   freshness check but still honors a server-imposed backoff).
+    func refresh(force: Bool = true) {
+        if ClaudeAccountsManager.shared.detect() {
+            if case .loaded = state {} else if case .error = state {} else { state = .loading }
+            log("refresh: delegating to cswap")
+            ClaudeAccountsManager.shared.refresh(force: force)
+            return
+        }
+
         guard authManager.isConnected else {
             state = .notConnected
+            return
+        }
+
+        if let until = backoffUntil {
+            if Date() < until {
+                let secs = Int(until.timeIntervalSinceNow)
+                log("refresh: skipped, backing off for another \(secs)s after 429")
+                return
+            }
+            backoffUntil = nil
+        }
+
+        if !force, let last = lastUpdateTime, Date().timeIntervalSince(last) < Self.serveTTL {
+            log("refresh: skipped, data is \(Int(Date().timeIntervalSince(last)))s old (< \(Int(Self.serveTTL))s)")
             return
         }
         
@@ -115,7 +173,13 @@ class ClaudeUsageManager: ObservableObject {
             guard let token = token else {
                 self.log("refresh: no valid token returned")
                 DispatchQueue.main.async {
-                    self.state = .error("Session expired. Please reconnect in Settings.")
+                    if !self.authManager.isConnected {
+                        self.state = .notConnected
+                    } else if let reason = self.authManager.authError {
+                        self.state = .error(reason)
+                    } else {
+                        self.state = .error("Session expired. Please reconnect in Settings.")
+                    }
                 }
                 return
             }
@@ -133,7 +197,9 @@ class ClaudeUsageManager: ObservableObject {
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        
+        request.setValue(AnthropicAuthManager.userAgent, forHTTPHeaderField: "User-Agent")
+        request.timeoutInterval = 15
+
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
                 guard let self = self else { return }
@@ -168,7 +234,11 @@ class ClaudeUsageManager: ObservableObject {
                             } else {
                                 self.log("fetchUsage: token refresh failed")
                                 self.retryCount = 0
-                                self.state = .error("Session expired. Please reconnect in Settings.")
+                                if self.authManager.source == .claudeCode {
+                                    self.state = .error("Claude Code session rejected. Run `claude` in a terminal to sign in again.")
+                                } else {
+                                    self.state = .error("Session expired. Please reconnect in Settings.")
+                                }
                             }
                         }
                     } else {
@@ -188,11 +258,13 @@ class ClaudeUsageManager: ObservableObject {
                     self.log("fetchUsage: 429 RATE LIMITED")
                     self.log("fetchUsage: 429 body=\(bodyStr)")
                     
-                    // Log relevant headers for diagnostics
+                    // Honor Retry-After (seconds form) plus a margin; otherwise a default wait.
+                    var retryAfterSeconds: TimeInterval?
                     if let httpResp = httpResponse {
                         let headers = httpResp.allHeaderFields
                         if let retryAfter = headers["Retry-After"] ?? headers["retry-after"] {
                             self.log("fetchUsage: 429 Retry-After=\(retryAfter)")
+                            retryAfterSeconds = Self.parseRetryAfter(retryAfter)
                         }
                         for (key, value) in headers {
                             if let keyStr = key as? String, keyStr.lowercased().contains("ratelimit") {
@@ -200,13 +272,16 @@ class ClaudeUsageManager: ObservableObject {
                             }
                         }
                     }
-                    
+                    let wait = Self.backoffDuration(retryAfter: retryAfterSeconds)
+                    self.backoffUntil = Date().addingTimeInterval(wait)
+                    self.log("fetchUsage: 429 - next request no sooner than \(Int(wait))s from now")
+
                     // Keep existing data if we have it, otherwise show error
                     if case .loaded = self.state {
                         self.log("fetchUsage: 429 - keeping previous usage data")
                         // Don't change state - keep showing last known good data
                     } else {
-                        self.state = .error("Rate limited. Please wait and try again.")
+                        self.state = .error("Rate limited by Anthropic. Retrying in \(Int(wait / 60)) min.")
                     }
                     return
                 }
@@ -224,14 +299,51 @@ class ClaudeUsageManager: ObservableObject {
         }.resume()
     }
     
+    // MARK: - External source (cswap)
+
+    /// Accept usage produced by ClaudeAccountsManager for the active account.
+    func applyExternal(usage: ClaudeUsage, fetchedAt: Date) {
+        state = .loaded(usage)
+        lastUpdateTime = fetchedAt
+        updateLastUpdateText()
+        backoffUntil = nil
+    }
+
+    /// Report a cswap-side failure. Keeps last good data when present.
+    func applyExternalFailure(_ message: String) {
+        if case .loaded = state {
+            log("cswap: \(message) (keeping previous data)")
+        } else {
+            state = .error(message)
+        }
+    }
+
+    /// Parse a Retry-After header value in its seconds form. HTTP-date form is
+    /// rare on this endpoint and is treated as absent.
+    static func parseRetryAfter(_ value: Any) -> TimeInterval? {
+        let str = String(describing: value).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let secs = TimeInterval(str), secs >= 0 else { return nil }
+        return secs
+    }
+
+    /// How long to wait before the next request after a 429.
+    /// - `nil` or `0`: the server gave no deadline (or the "saturated edge" case);
+    ///   wait `defaultBackoff`.
+    /// - `N > 0`: wait N + `retryAfterMargin`, capped at `maxBackoff`.
+    static func backoffDuration(retryAfter: TimeInterval?) -> TimeInterval {
+        guard let ra = retryAfter, ra > 0 else { return defaultBackoff }
+        return min(ra + retryAfterMargin, maxBackoff)
+    }
+
     private func parseUsageResponse(_ data: Data) {
         let result = ClaudeUsageParser.parseResponse(data)
         switch result {
         case .success(let usage):
-            log("parseUsage: success! 5h=\(usage.fiveHour.percent)% daily=\(usage.dailyAllModels.percent)% sonnet=\(usage.dailySonnet.percent)%")
+            log("parseUsage: success! 5h=\(usage.fiveHour.percent)% weekly=\(usage.weeklyAll.percent)% \(usage.weeklyModelLabel)=\(usage.weeklyModel.percent)%")
             state = .loaded(usage)
             lastUpdateTime = Date()
             lastUpdateText = "just now"
+            backoffUntil = nil
         case .failure(let error):
             switch error {
             case .invalidJSON:

@@ -13,6 +13,9 @@
 		AA0000070000000000000001 /* UsageIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000080000000000000001 /* UsageIconView.swift */; };
 		AA0000090000000000000001 /* ClaudeUsageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000100000000000000001 /* ClaudeUsageManager.swift */; };
 		BB0000010000000000000001 /* AnthropicAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000001 /* AnthropicAuthManager.swift */; };
+		BB0000050000000000000001 /* ClaudeCodeCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000060000000000000001 /* ClaudeCodeCredentials.swift */; };
+		BB0000070000000000000001 /* CswapClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000080000000000000001 /* CswapClient.swift */; };
+		BB0000090000000000000001 /* ClaudeAccountsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000100000000000000001 /* ClaudeAccountsManager.swift */; };
 		BB0000030000000000000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000040000000000000001 /* SettingsView.swift */; };
 		C3A6C1A32F427B6000C57C8F /* ClaudeUsageParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A6C1A02F427B6000C57C8F /* ClaudeUsageParser.swift */; };
 		C3A6C1A42F427B6000C57C8F /* CopilotUsageParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A6C1A12F427B6000C57C8F /* CopilotUsageParser.swift */; };
@@ -44,6 +47,9 @@
 		AA0000110000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA0000120000000000000001 /* CodeQuota.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CodeQuota.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB0000020000000000000001 /* AnthropicAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicAuthManager.swift; sourceTree = "<group>"; };
+		BB0000060000000000000001 /* ClaudeCodeCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCodeCredentials.swift; sourceTree = "<group>"; };
+		BB0000080000000000000001 /* CswapClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CswapClient.swift; sourceTree = "<group>"; };
+		BB0000100000000000000001 /* ClaudeAccountsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAccountsManager.swift; sourceTree = "<group>"; };
 		BB0000040000000000000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		C3A6C1A02F427B6000C57C8F /* ClaudeUsageParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeUsageParser.swift; sourceTree = "<group>"; };
 		C3A6C1A12F427B6000C57C8F /* CopilotUsageParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopilotUsageParser.swift; sourceTree = "<group>"; };
@@ -99,6 +105,9 @@
 				AA0000080000000000000001 /* UsageIconView.swift */,
 				AA0000100000000000000001 /* ClaudeUsageManager.swift */,
 				BB0000020000000000000001 /* AnthropicAuthManager.swift */,
+				BB0000060000000000000001 /* ClaudeCodeCredentials.swift */,
+				BB0000100000000000000001 /* ClaudeAccountsManager.swift */,
+				BB0000080000000000000001 /* CswapClient.swift */,
 				BB0000040000000000000001 /* SettingsView.swift */,
 				CC0000020000000000000001 /* GitHubAuthManager.swift */,
 				CC0000040000000000000001 /* CopilotUsageManager.swift */,
@@ -241,6 +250,9 @@
 				AA0000070000000000000001 /* UsageIconView.swift in Sources */,
 				AA0000090000000000000001 /* ClaudeUsageManager.swift in Sources */,
 				BB0000010000000000000001 /* AnthropicAuthManager.swift in Sources */,
+				BB0000050000000000000001 /* ClaudeCodeCredentials.swift in Sources */,
+				BB0000090000000000000001 /* ClaudeAccountsManager.swift in Sources */,
+				BB0000070000000000000001 /* CswapClient.swift in Sources */,
 				BB0000030000000000000001 /* SettingsView.swift in Sources */,
 				C3A6C1A32F427B6000C57C8F /* ClaudeUsageParser.swift in Sources */,
 				C3A6C1E82F42948600C57C8F /* UpdaterViewModel.swift in Sources */,

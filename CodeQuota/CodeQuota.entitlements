@@ -2,14 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>com.apple.security.app-sandbox</key>
-	<true/>
+	<!--
+	 Not sandboxed on purpose: the multi-account features run the user's
+	 `cswap` CLI (installed under ~/.local/bin via uv/pipx) and read Claude
+	 Code's Keychain item. Neither is reachable from inside the App Sandbox.
+	 The app is distributed via GitHub + Sparkle, not the Mac App Store, so
+	 the sandbox is not required.
+	-->
 	<key>com.apple.security.network.client</key>
 	<true/>
-	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
-	<array>
-		<string>$(PRODUCT_BUNDLE_IDENTIFIER)-spks</string>
-		<string>$(PRODUCT_BUNDLE_IDENTIFIER)-spki</string>
-	</array>
 </dict>
 </plist>
