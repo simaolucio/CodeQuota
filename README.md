@@ -46,11 +46,13 @@ The official dashboards are buried. Checking usage means context-switching, logg
 ### Full Feature List
 
 - **Menu bar usage indicator** — colored status circle + percentage + optional reset countdown, visible at a glance
-- **Claude usage tracking** — monitors 5-hour rolling session, weekly all-models limit, and weekly Sonnet limit
+- **Claude usage tracking** — monitors 5-hour rolling session, weekly all-models limit, and the weekly model-specific limit the API reports (currently Fable)
+- **Reuses your Claude Code login** — if the Claude Code CLI is signed in, CodeQuota picks up that session automatically; no separate sign-in
+- **Multi-account switching** — with [claude-swap](https://github.com/realiti4/claude-swap) installed, see every Claude account's usage in the popover and switch between them in one click
 - **Copilot usage tracking** — tracks monthly premium request usage broken down by model
 - **Configurable display** — choose which metric appears in the menu bar; toggle reset time on or off
 - **Color-coded progress bars** — green (<50%), yellow (50-80%), red (>80%)
-- **OAuth authentication** — Anthropic PKCE + GitHub device flow. No cookies, no session keys, no browser dev tools
+- **OAuth authentication** — Claude Code login, Anthropic PKCE fallback, GitHub device flow. No cookies, no session keys, no browser dev tools
 - **Dark, minimal UI** — borderless panel with rounded corners, consistent dark theme
 
 **Who is this for?**
@@ -122,7 +124,7 @@ In Settings under **Menu Bar**, select which usage metric is displayed in your s
 
 - Claude — 5-Hour Session
 - Claude — Weekly All Models
-- Claude — Weekly Sonnet
+- Claude — Weekly Fable (the model-specific weekly limit; the label follows whatever model the API names)
 - Copilot — Premium Requests
 
 ### Show Reset Time
@@ -153,11 +155,11 @@ No. CodeQuota only reads usage and billing data from the respective APIs. It doe
 
 ### Do I need to copy cookies or session keys?
 
-No. Unlike most Claude usage trackers that require you to dig into browser dev tools and copy session cookies, CodeQuota uses proper OAuth authentication. Just click **Connect** and authorize in your browser — that's it.
+No. Unlike most Claude usage trackers that require you to dig into browser dev tools and copy session cookies, CodeQuota reuses your Claude Code login or uses proper OAuth authentication. Just click **Connect** and authorize in your browser — that's it.
 
 ### Does it work with Claude Code?
 
-Yes. All Claude platforms — Claude Code, Claude.ai, the desktop app, and the mobile app — share the same underlying usage limits. CodeQuota monitors them all.
+Yes. All Claude platforms — Claude Code, Claude.ai, the desktop app, and the mobile app — share the same underlying usage limits. CodeQuota monitors them all, and if Claude Code is installed and signed in, CodeQuota reuses that login.
 
 ### What plans are supported?
 
