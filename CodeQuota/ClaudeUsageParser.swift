@@ -52,22 +52,14 @@ struct ClaudeUsageParser {
         let limits = parseLimits(json)
 
         // 2. Legacy / flat keys as fallbacks.
-        let fiveHour = limits.session
-            ?? parseBucket(json, key: "five_hour")
-            ?? parseBucket(json, key: "fiveHour")
-            ?? parseBucket(json, key: "5_hour")
-            ?? parseBucket(json, key: "short_term")
-            ?? parseBucket(json, key: "shortTerm")
+        let fiveHourKeys = ["five_hour", "fiveHour", "5_hour", "short_term", "shortTerm"]
+        let fiveHour = limits.session ?? firstBucket(json, keys: fiveHourKeys)
 
-        let weeklyAll = limits.weeklyAll
-            ?? parseBucket(json, key: "seven_day")
-            ?? parseBucket(json, key: "seven_day_all")
-            ?? parseBucket(json, key: "daily")
-            ?? parseBucket(json, key: "sevenDayAll")
-            ?? parseBucket(json, key: "7_day_all")
-            ?? parseBucket(json, key: "long_term")
-            ?? parseBucket(json, key: "longTerm")
-            ?? parseBucket(json, key: "weekly")
+        let weeklyAllKeys = [
+            "seven_day", "seven_day_all", "daily", "sevenDayAll",
+            "7_day_all", "long_term", "longTerm", "weekly",
+        ]
+        let weeklyAll = limits.weeklyAll ?? firstBucket(json, keys: weeklyAllKeys)
 
         var weeklyModel = limits.weeklyModel
         var weeklyModelName = limits.weeklyModelName
@@ -184,6 +176,14 @@ struct ClaudeUsageParser {
 
     /// Try to parse a usage bucket from the JSON under a given key.
     /// Supports both nested object and flat key patterns.
+    /// Return the first bucket found under any of `keys`, in order.
+    private static func firstBucket(_ json: [String: Any], keys: [String]) -> UsageBucket? {
+        for key in keys {
+            if let bucket = parseBucket(json, key: key) { return bucket }
+        }
+        return nil
+    }
+
     static func parseBucket(_ json: [String: Any], key: String) -> UsageBucket? {
         // Try as nested object
         if let bucket = json[key] as? [String: Any] {
